@@ -11,7 +11,7 @@ import os
 
 from django.core.wsgi import get_wsgi_application
 
-settings_module = 'NFS_360.deployment' if 'WEBSITE_HOSTNAME' in os.environ else 'NFS_360.settings'
+settings_module = 'NFS_360.deployment' if 'Hostname_Neucode' in os.environ else 'NFS_360.settings'
 
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', settings_module)
