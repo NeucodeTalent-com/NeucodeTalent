@@ -101,32 +101,33 @@ WSGI_APPLICATION = 'NFS_360.wsgi.application'
 #     }
 # }
 
-from decouple import config
+#from decouple import config
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mssql',
-        'NAME': config('DATABASE_NAME'),
-        'USER': config('DATABASE_USER'),
-        'PASSWORD': config('DATABASE_PASSWORD'),
-        'HOST': config('DATABASE_HOST'),
-        'PORT': config('DATABASE_PORT'),
+        'ENGINE': 'django.db.backends.mssql',  # Adjust as needed for your backend
+        'NAME': os.environ.get('DATABASE_NAME', 'neucode-sql-dev'),
+        'USER': os.environ.get('DATABASE_USER', 'neucodeadmin'),
+        'PASSWORD': os.environ.get('DATABASE_PASSWORD', 'AASU@123'),
+        'HOST': os.environ.get('DATABASE_HOST', 'neucode-server-dev.database.windows.net'),
+        'PORT': os.environ.get('DATABASE_PORT', '1433'),  # Default MSSQL port
         'OPTIONS': {
             'driver': 'ODBC Driver 18 for SQL Server',
-            'Encrypt': 'yes',  # Use encryption for Azure MSSQL
-            'TrustServerCertificate': 'yes',  # Trust server certificate if needed
+            'Encrypt': 'yes',
+            'TrustServerCertificate': 'yes',
         },
     }
 }
 
-# Email Configuration
+# Email Configuration using environment variables
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = config('EMAIL_HOST')
-EMAIL_PORT = config('EMAIL_PORT', cast=int)
+EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.office365.com')  # Replace with a default if needed
+EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 587))  # Default to port 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = config('EMAIL_HOST_USER')
-EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', 'anantsol@neucodetalent.com')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', 'AgtQb@24')
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
 
 
 
