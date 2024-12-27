@@ -34,7 +34,7 @@ STATIC_URL = 'static/'
 # Database configuration using environment variables
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mssql',  # Adjust as needed for your backend
+        'ENGINE': 'mssql',  # Adjust as needed for your backend
         'NAME': os.environ.get('DATABASE_NAME', 'neucode-sql-dev'),
         'USER': os.environ.get('DATABASE_USER', 'neucodeadmin'),
         'PASSWORD': os.environ.get('DATABASE_PASSWORD', 'AASU@123'),
