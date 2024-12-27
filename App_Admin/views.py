@@ -1,0 +1,1046 @@
+
+from django.contrib import messages
+import subprocess
+import os
+
+from django.http import HttpResponse
+
+# Create your views here.
+
+##################### Page_1: Email_Generation #####################
+
+from django.shortcuts import render, redirect
+from django.http import JsonResponse
+from django.core.mail import send_mail
+from django.conf import settings
+from .models import ClientProject, Seeker, Provider, SuperUser, RelationshipView, CliPr, ProviderURL, SuperUserURL, OptimumMinimumCriteriaView, FullRatingDataView, OpenQuestionView
+from .utils import generate_unique_url
+from django.db.models import Q
+
+# 1. Email Functinality:
+def admin1_compose_email(request):
+
+    return render(request, 'admin1_compose_email.html')
+
+def fetch_client(request):
+    clients = ClientProject.objects.values('client_name').distinct()
+    client_list = [{'client_name': client['client_name']} for client in clients]
+    return JsonResponse({'clients': client_list})
+
+    # try:
+    #     # Fetch distinct client names from the ClientProject model
+    #     clients = ClientProject.objects.values_list('client_name', flat=True).distinct()
+    #     print(f"Clients fetched successfully: {list(clients)}")  # Debugging: Log fetched clients
+    # except Exception as e:
+    #     # Handle any errors during fetching
+    #     messages.error(request, f"Error fetching clients: {str(e)}")
+    #     clients = []
+
+    # # Pass the fetched clients to the template for rendering
+
+    # return render(request, 'admin1_compose_email.html', {'clients': clients})
+
+# Getting project on the bases of client:
+def get_projects_by_client(request, client_name):
+    try:
+        # Fetch the client object by ID
+        # client_name = ClientProject.GET.get('client_name')
+
+        # Fetch projects associated with the client
+        projects = list(ClientProject.objects.filter(client_name__iexact=client_name).values('project_name'))
+
+        # Check if projects exist for the given client_name
+        if not projects:
+            return JsonResponse({'error': f'No projects found for client: {client_name}'}, status=404)
+        
+        print(projects)
+        # Return projects and client name
+        return JsonResponse({
+            'client_name': client_name,
+            'projects': projects
+        })
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+# View to fetch seekers and statuses dynamically
+def get_seekers_and_statuses(request):
+    client_name = request.GET.get('client_name', '')
+    project_name = request.GET.get('project_name', '')
+
+    client_projects = ClientProject.objects.all()
+    if client_name:
+        client_projects = client_projects.filter(client_name__icontains=client_name)
+    if project_name:
+        client_projects = client_projects.filter(project_name__icontains=project_name)
+
+    seekers = Seeker.objects.filter(cp__in=client_projects)
+    statuses = ['open', 'in_progress', 'completed']  # Example statuses
+    print(f'Seekers data 1::::: {seekers}')
+    seekers_data = [{'id': seeker.seeker_id, 'email': seeker.seeker_email} for seeker in seekers]
+    print(f'Seekers data 2::::: {seekers_data}')
+    return JsonResponse({'seekers': seekers_data, 'statuses': statuses})
+
+def get_filtered_data(request):
+    client_name = request.GET.get('client_name', '')
+    project_name = request.GET.get('project_name', '')
+    #status = request.GET.get('status', '')  # Assuming status is related to seekers or relationships
+
+    # Filter client projects based on the client and project names
+    client_projects = ClientProject.objects.all()
+    if client_name:
+        client_projects = client_projects.filter(client_name__icontains=client_name)
+    if project_name:
+        client_projects = client_projects.filter(project_name__icontains=project_name)
+    
+    # Fetch seekers associated with the filtered client projects
+    # seekers = Seeker.objects.filter(cp__in=client_projects)
+    # providers = Provider.objects.filter(cp__in = client_projects )
+    # # Fetch relationships involving these seekers and client projects
+    # #relationships = Relationship.objects.filter(cp__in=client_projects, seeker__in=seekers)
+    # relationships = RelationshipView.objects.filter( seeker_id__in=seekers, provider_id__in = providers)
+    # # If a status is provided, filter the relationships further
+    # # if status:
+    # #     relationships = relationships.filter(relationship__iexact=status)
+
+    # # Prepare the data to send back as JSON
+    # data = []
+    # for relationship in relationships:
+    #     data.append({
+    #         'seeker_name': f"{relationship.seeker_id.seeker_first_name} {relationship.seeker_id.seeker_last_name or ''}".strip(),
+    #         'seeker_email': relationship.seeker_id.seeker_email,
+    #         'provider_name': f"{relationship.provider_id.provider_first_name} {relationship.provider_id.provider_last_name or ''}".strip(),
+    #         'provider_email': relationship.provider_id.provider_email,
+    #         'relationship': relationship.relationship,
+           
+    #     })
+
+    # return JsonResponse({'seekers': data})
+
+    # Retrieve the list of cp_ids from the filtered ClientProjects
+    cp_ids = list(client_projects.values_list('cp_id', flat=True))
+    
+    if not cp_ids:
+        # If no ClientProjects match the filters, return an empty list
+        return JsonResponse({'seekers': []})
+    
+    # Fetch relationships from RelationshipView where cp is in the filtered cp_ids
+    relationships = RelationshipView.objects.filter(cp__in=cp_ids)
+    
+    if not relationships.exists():
+        # If no relationships are found, return an empty list
+        return JsonResponse({'seekers': []})
+    
+    # Extract all seeker_ids and provider_ids to optimize database queries
+    seeker_ids = relationships.values_list('seeker_id', flat=True)
+    provider_ids = relationships.values_list('provider_id', flat=True)
+    
+    # Fetch all relevant Seekers and Providers in bulk
+    seekers = Seeker.objects.filter(seeker_id__in=seeker_ids).values(
+        'seeker_id', 'seeker_first_name', 'seeker_last_name', 'seeker_email'
+    )
+    providers = Provider.objects.filter(provider_id__in=provider_ids).values(
+        'provider_id', 'provider_first_name', 'provider_last_name', 'provider_email'
+    )
+    
+    # Create dictionaries for quick lookup by seeker_id and provider_id
+    seekers_dict = {s['seeker_id']: s for s in seekers}
+    providers_dict = {p['provider_id']: p for p in providers}
+    
+    # Prepare the data list to be returned in the JSON response
+    data = []
+    for relationship in relationships:
+        seeker = seekers_dict.get(relationship.seeker_id)
+        provider = providers_dict.get(relationship.provider_id)
+        
+        # Ensure both seeker and provider exist
+        if seeker and provider:
+            seeker_full_name = f"{seeker['seeker_first_name']} {seeker['seeker_last_name'] or ''}".strip()
+            provider_full_name = f"{provider['provider_first_name']} {provider['provider_last_name'] or ''}".strip()
+            
+            data.append({
+                'seeker_name': seeker_full_name if seeker_full_name else 'N/A',
+                'seeker_email': seeker['seeker_email'] if seeker['seeker_email'] else 'N/A',
+                'provider_name': provider_full_name if provider_full_name else 'N/A',
+                'provider_email': provider['provider_email'] if provider['provider_email'] else 'N/A',
+                'relationship': relationship.relationship if relationship.relationship else 'N/A',
+            })
+    
+    return JsonResponse({'seekers': data})
+
+
+
+# View to fetch seeker emails dynamically
+def fetch_emails(request):
+    # client_name = request.GET.get('client_name')
+    # project_name = request.GET.get('project_name')
+    # status = request.GET.get('status', '')  # Assuming status is related to seekers or relationships
+
+    # client_projects = ClientProject.objects.all()
+    # if client_name:
+    #     client_projects = client_projects.filter(client_name__icontains = client_name)
+    # if project_name:
+    #     client_projects = client_projects.filter(project_name__icontains = project_name)
+    
+        
+    #  # Initialize querysets for seekers, providers, and super users
+    # seekers = Seeker.objects.filter(cp__in=client_projects)
+    # providers = Provider.objects.filter(cp__in=client_projects)
+    # super_users = SuperUser.objects.filter(cp__in=client_projects)
+
+    # # Apply status filter if provided
+    # if status:
+    #     valid_statuses = ['open', 'in-progress', 'completed']
+    #     if status.lower() in valid_statuses:
+    #         seekers = seekers.filter(status=status.lower())
+    #         providers = providers.filter(status=status.lower())
+    #         super_users = super_users.filter(status=status.lower())
+
+    # # Collect email lists
+    # seekers_emails = [seeker.seeker_email for seeker in seekers]
+    # provider_emails = [provider.provider_email for provider in providers]
+    # super_emails = [super_user.super_user_email for super_user in super_users]
+
+
+    client_name = request.GET.get('client_name', '').strip()
+    project_name = request.GET.get('project_name', '').strip()
+    status = request.GET.get('status', '').strip().lower()  # Ensure the status is lowercase for consistent filtering
+
+    # Fetch ClientProjects based on client_name and project_name filters
+    client_projects = ClientProject.objects.all()
+    if client_name:
+        client_projects = client_projects.filter(client_name__icontains=client_name)
+    if project_name:
+        client_projects = client_projects.filter(project_name__icontains=project_name)
+
+    # Debugging logs to check if client_projects is being filtered correctly
+    print(f"Filtered ClientProjects: {client_projects}")
+
+    # Fetch relationships excluding those with relationship='self' (case-insensitive)
+    valid_relationships = RelationshipView.objects.filter(cp__in=client_projects).exclude(relationship__iexact='self')
+
+    # Extract related seeker and provider IDs
+    valid_seeker_ids = valid_relationships.values_list('seeker_id', flat=True)
+    valid_provider_ids = valid_relationships.values_list('provider_id', flat=True)
+
+    # Initialize querysets for seekers and providers, excluding relationships with 'self'
+    seekers = Seeker.objects.filter(pk__in=valid_seeker_ids)
+    providers = Provider.objects.filter(pk__in=valid_provider_ids)
+
+    super_users = SuperUser.objects.filter(cp__in=client_projects)
+
+    # Apply status filter (case-insensitive)
+    valid_statuses = ['open', 'in-progress', 'completed']
+    if status.lower() in [s.lower() for s in valid_statuses]:  # Check case-insensitively
+        seekers = seekers.filter(status__iexact=status)
+        providers = providers.filter(status__iexact=status)
+        
+    # Debugging logs to ensure the filtering by status works
+    print(f"Filtered Seekers (status={status}): {seekers}")
+    print(f"Filtered Providers (status={status}): {providers}")
+
+    # Collect email lists
+    seekers_emails = [seeker.seeker_email for seeker in seekers]
+    provider_emails = [provider.provider_email for provider in providers]
+    super_emails = [super_user.super_user_email for super_user in super_users]
+
+    # Debugging logs to check final output
+    print(f"Seekers Emails: {seekers_emails}")
+    print(f"Providers Emails: {provider_emails}")
+    print(f"Super Users Emails: {super_emails}")
+
+    return JsonResponse({'seeker_emails': seekers_emails, 
+                         'provider_emails': provider_emails, 
+                         'super_emails': super_emails
+                         })
+
+# # View to fetch provider emails dynamically
+# def get_provider_emails(request):
+#     client_name = request.GET.get('client_name')
+#     project_name = request.GET.get('project_name')
+
+#     client_projects = ClientProject.objects.all()
+#     if client_name:
+#         client_projects = client_projects.filter(client_name__icontains=client_name)
+#     if project_name:
+#         client_projects = client_projects.filter(project_name__icontains=project_name)
+
+#     providers = Provider.objects.filter(cp__in=client_projects)
+#     emails = [provider.provider_email for provider in providers]
+#     return JsonResponse({'emails': emails})
+
+# # View to fetch superuser email dynamically
+# def get_superuser_emails(request):
+#     client_name = request.GET.get('client_name')
+#     project_name = request.GET.get('project_name')
+
+#     client_projects = ClientProject.objects.all()
+#     if client_name:
+#         client_projects = client_projects.filter(client_name__icontains=client_name)
+#     if project_name:
+#         client_projects = client_projects.filter(project_name__icontains=project_name)
+
+#     super_user = SuperUser.objects.filter(cp__in=client_projects).first()
+#     email = super_user.super_user_email if super_user else None
+#     return JsonResponse({'email': email})
+
+
+
+
+# # View to fetch CC email options restricted to relationship = 'Manager'
+# def get_cc_emails(request):
+#     client_name = request.GET.get('client_name')
+#     project_name = request.GET.get('project_name')
+
+#     # Filter ClientProject based on client_name and project_name
+#     client_projects = ClientProject.objects.all()
+#     if client_name:
+#         client_projects = client_projects.filter(client_name__icontains=client_name)
+#     if project_name:
+#         client_projects = client_projects.filter(project_name__icontains=project_name)
+
+#     # Join Relationship and Provider to filter providers with relationship = 'Manager'
+#     relationships = Relationship.objects.filter(
+#         cp__in=client_projects,  # Match related projects
+#         relationship='Manager'   # Filter for 'Manager' relationship
+#     ).select_related('provider')  # Optimize query with related field lookup
+
+#     # Collect provider emails from the filtered relationships
+#     cc_email_list = [rel.provider.provider_email for rel in relationships]
+
+#     # Return the filtered CC emails
+#     return JsonResponse({'ccEmails': cc_email_list})
+
+
+# 1_1. Unique URL API generation: 
+#from .models import Provider
+# from .utils import generate_unique_link
+
+
+# from .utils import generate_unique_url
+# from .models import ProviderURL, SuperUserURL
+
+def insert_link(request):
+    try:
+        # Extract required parameters
+        client_name = request.GET.get('client_name', '').strip()
+        project_name = request.GET.get('project_name', '').strip()
+        email_type = request.GET.get('email_type', '').strip()
+        insert_link = request.GET.get('insert_link', 'false').lower() == 'true'
+
+        # Fetch client projects
+        client_projects = ClientProject.objects.filter(
+            client_name__icontains=client_name,
+            project_name__icontains=project_name
+        )
+
+        if not client_projects.exists():
+            return JsonResponse({'error': 'No matching client projects found.'}, status=404)
+
+        if not insert_link:
+            return JsonResponse({'message': 'Insert link is not checked. No URLs generated.'})
+
+        generated_links = []
+
+        # Process providers
+        if email_type == "provider" and insert_link:
+            for cp in client_projects:
+                providers = Provider.objects.filter(cp=cp)
+                for provider in providers:
+                    # Check for duplicates
+                    print("checking Provider URL!!")
+                    existing_url = ProviderURL.objects.filter(cp=cp, provider_email=provider.provider_email).first()
+                    if not existing_url:
+                        unique_url, unique_id = generate_unique_url(
+                            request, provider.provider_email, "provider", cp.cp_id, provider.provider_id
+                        )
+                        print("Generate link successfully Now going to insert link!!")
+                        ProviderURL.objects.create(
+                            cp=cp,
+                            client_name=cp.client_name,
+                            project_name=cp.project_name,
+                            provider_id=provider.provider_id,
+                            provider_name=f"{provider.provider_first_name} {provider.provider_last_name}",
+                            provider_email=provider.provider_email,
+                            provi_url=unique_url,
+                            unique_id=unique_id
+                        )
+                        generated_links.append({
+                            'email': provider.provider_email,
+                            'url': unique_url,
+                            'unique_id': str(unique_id)
+                        })
+
+        # Process superusers
+        if email_type == "superuser" and insert_link:
+            for cp in client_projects:
+                superuser = SuperUser.objects.filter(cp=cp).first()
+                print()
+                if superuser:
+                    # Check for duplicates
+                    print("checking Superuser URL!!")
+                    existing_url = SuperUserURL.objects.filter(cp=cp, superuser_email=superuser.super_user_email).first()
+                    if not existing_url:
+                        unique_url, unique_id = generate_unique_url(
+                            request, superuser.super_user_email, "superuser", cp.cp_id
+                        )
+                        print("Generate link successfully Now going to insert link!!")
+                        SuperUserURL.objects.create(
+                            cp=cp,
+                            client_name=cp.client_name,
+                            project_name=cp.project_name,
+                            superuser_name=f"{superuser.super_user_first_name} {superuser.super_user_last_name}",
+                            superuser_email=superuser.super_user_email,
+                            super_url=unique_url,
+                            unique_id=unique_id
+                        )
+                        generated_links.append({
+                            'email': superuser.super_user_email,
+                            'url': unique_url,
+                            'unique_id': str(unique_id)
+                        })
+
+        return JsonResponse({
+            'message': 'Unique URLs generated successfully.',
+            'generated_links': generated_links
+        })
+
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+    
+
+    
+# def generate_unique_link(request, provider_email):
+#     try:
+#         provider = Provider.objects.get(email=provider_email)
+#         link = generate_unique_link(provider)
+#         return JsonResponse({'success': True, 'link': link})
+#     except Provider.DoesNotExist:
+#         return JsonResponse({'success': False, 'message': 'Provider not found'})
+
+# # 1_2. Redirect to User Interface:
+# from django.shortcuts import render, get_object_or_404
+# from .models import Provider
+
+# def user_instructions(request):
+#     unique_key = request.GET.get('key')
+#     provider = get_object_or_404(Provider, unique_url__contains=unique_key)
+#     return render(request, 'user1_instructions.html', {'provider': provider})
+
+
+# # 1_3. Sending Email:
+# from django.core.mail import send_mail
+# from .models import Provider
+
+# # def send_feedback_email(request):
+# #     if request.method == 'POST':
+# #         subject = request.POST['subject']
+# #         body = request.POST['emailBody']
+# #         client_id = request.POST['client']
+# #         project_id = request.POST['project']
+
+# #         providers = Provider.objects.filter(client=client_id, project=project_id)
+# #         for provider in providers:
+# #             personalized_body = body.replace('>>>>>', f"<a href='{provider.unique_url}'>{provider.unique_url}</a>")
+# #             send_mail(subject, personalized_body, 'admin@neucode.com', [provider.email], fail_silently=False)
+        
+# #         return JsonResponse({'success': True})
+# #     return JsonResponse({'success': False, 'message': 'Invalid request'})
+
+
+
+
+# # View to render the email trigger page
+# def email_trigger_view(request):
+#     # Filtering ClientProject based on request parameters
+#     client_projects = ClientProject.objects.all()
+#     if request.GET.get('client_name'):
+#         client_projects = client_projects.filter(client_name__icontains=request.GET.get('client_name'))
+#     if request.GET.get('project_name'):
+#         client_projects = client_projects.filter(project_name__icontains=request.GET.get('project_name'))
+
+#     # Fetching Seekers and Providers based on the filtered ClientProject
+#     seekers = Seeker.objects.filter(cp__in=client_projects)
+#     providers = Provider.objects.filter(cp__in=client_projects)
+
+#     # Example statuses (adjust according to model or business logic)
+#     statuses = ['open', 'in_progress', 'completed']
+
+#     # Preparing context to send to the template
+#     context = {
+#         'client_projects': client_projects,
+#         'seekers': seekers,
+#         'providers': providers,
+#         'statuses': statuses,
+#     }
+
+#     return render(request, 'email_trigger.html', context)
+from bs4 import BeautifulSoup
+def extract_text_from_html(html_content: str) -> str:
+    """
+    Extracts text from an HTML string using BeautifulSoup.
+    
+    Args:
+        html_content (str): The HTML content string.
+    
+    Returns:
+        str: Extracted plain text from the HTML content.
+    """
+    soup = BeautifulSoup(html_content, 'html.parser')
+    text_content = soup.get_text(strip=True)
+
+    # Regular expression to match valid URLs
+    url_pattern = r'(http[s]?://[^\s<>"]+|www\.[^\s<>"]+)'
+    match = re.search(url_pattern, text_content)
+    
+    # Return the first matched URL or an empty string
+    return match.group(0) if match else ""
+
+from django.shortcuts import render, redirect
+# from django.core.mail import EmailMessage
+# from django.utils.html import strip_tags
+from django.contrib import messages
+import html
+import re
+from django.core.mail import EmailMultiAlternatives
+
+#import html2text
+
+def compose_email(request):
+    if request:
+        # Get form data
+        subject = request.POST.get('subject', '')
+        email_field = request.POST.get('email_field', '')
+        cc_field = request.POST.get('cc_input', '')
+        email_body = request.POST.get('emailBody', '')  # Contains HTML from TinyMCE
+        email_type = request.POST.get('email_type', '').strip() or request.GET.get('email_type', '').strip()  # Email type selected by the user at the frontend
+        print(f"Email type:::::>>>>> {email_type}")
+        #insert_link = request.POST.get('insert_link', 'false').lower() == 'true'
+
+        # Decode HTML entities in the email body
+        email_body_template = html.unescape(email_body)
+
+        # Parse email addresses
+        recipient_list = [email.strip() for email in email_field.split(',') if email.strip()]
+        cc_list = [email.strip() for email in cc_field.split(',') if email.strip()]
+
+        if not subject or not recipient_list or not email_body_template:
+            messages.error(request, "Subject, Selected Emails, and Email Content are required.")
+            return redirect('admin1_compose_email')
+
+        try:
+            for email in recipient_list:
+
+                print(f"Email Body with HTML for {email}: {email_body_template}")
+                # Strip HTML tags for plain text emails
+                # personalize_email_body = strip_tags(email_body_template)
+                # #personalize_email_body = html2text.html2text(email_body_template)
+                # print(f"Before link Email Body for {email}: {personalize_email_body}")
+                # email_body_plain = personalize_email_body
+                
+                email_body_plain = email_body_template
+                print(f"Before link Email Body for {email}: {email_body_plain}")
+
+                # Check for placeholder in the email body
+                if '>>>>>' in email_body_plain:
+
+                    if email_type == "provider":
+                        # Fetch the unique URL for the email
+                        provider_url = ProviderURL.objects.filter(provider_email=email).first()
+                        print(f"Provider URL: {provider_url.provi_url}")
+                        # Replace placeholder with the appropriate link email_type == "provider" email_type == "superuser"
+                        if provider_url:
+                            prov_link = provider_url.provi_url
+                            prov_link = extract_text_from_html(prov_link)
+                            # Regular expression to extract URLs
+                            # url_pattern = r'(http[s]?://[^\s<>"]+|www\.[^\s<>"]+)'
+                            # matches = re.findall(url_pattern, prov_link)
+                            # if matches:
+                            #     prov_link = matches[0]
+                            #     email_body_plain = email_body_plain.replace('>>>>>', f'<a href="{prov_link}">{prov_link}</a>')
+                            #     print(f"Email for {email}: Replaced with Provider URL -> {provider_url.provi_url},     link_in_body ->   {prov_link}")
+                            # else:
+                            #     print(f"No URL:::::>>>> {email}.")
+                            print(f'prov_linkkkkkkk:::::>>>>>>> {prov_link}')
+                            email_body_plain = email_body_plain.replace('>>>>>', f'<a href="{prov_link}">{prov_link}</a>')
+                            print(f"Email for {email}: Replaced with Provider URL -> {provider_url.provi_url},     link_in_body ->   {prov_link}")
+                        else:
+                            print(f"No URL found for {email}, keeping placeholder.")
+
+                    elif email_type == "superuser":
+                        superuser_url = SuperUserURL.objects.filter(superuser_email=email).first()
+                        print(f"Superuser URL: {superuser_url}")
+                        if superuser_url:
+                            supe_link = superuser_url.super_url
+                            #supe_link = extract_text_from_html(supe_link)
+                            email_body_plain = email_body_plain.replace('>>>>>', f'<a href="{supe_link}">{supe_link}</a>')
+                            print(f"Email for {email}: Replaced with Superuser URL -> {superuser_url.super_url},     link_in_body ->   {supe_link}")
+                        else:
+                            print(f"No URL found for {email}, keeping placeholder.")
+                    else:
+                        print(f"Invalid email type '{email_type}' for {email}")
+
+                print(f"Final Email Body for {email}: {email_body_plain}")
+                
+                url_pattern = r'(http[s]?://[^\s<>"]+|www\.[^\s<>"]+)'
+                matches = re.findall(url_pattern, email_body_plain)
+                if matches:
+                    link = matches[0]
+                    email_body_plain_1 = email_body_plain.replace('<p{url_pattern}>', link)
+                    print(f'modified>>>>>>>>>>>>>>>>>>>>>>>>>>> {email_body_plain_1}')
+                # Send email
+                email_message = EmailMultiAlternatives(
+                    subject=subject,
+                    body=email_body_plain,  # Use plain text body
+                    from_email='anantsol@neucodetalent.com',
+                    to=[email],
+                    cc=cc_list
+                )
+                email_message.attach_alternative(email_body_plain, "text/html")
+                #email_message.content_subtype = "html"
+                #email_message.content_subtype = "plain"  # Ensure plain text email
+                email_message.send(fail_silently=False)
+
+            messages.success(request, "Emails sent successfully with unique links!")
+        except Exception as e:
+            messages.error(request, f"Error sending email: {str(e)}")
+
+        return redirect('admin1_compose_email')
+
+    return render(request, 'admin1_compose_email.html')
+
+
+# from django.core.mail import EmailMultiAlternatives
+# def compose_email(request):
+#     if request:
+#         # Get form data
+#         subject = request.POST.get('subject', '')
+#         email_field = request.POST.get('email_field', '')
+#         cc_field = request.POST.get('cc_input', '')
+#         email_body = request.POST.get('emailBody', '')  # Contains HTML from TinyMCE
+#         email_type = request.POST.get('email_type', '').strip() or request.GET.get('email_type', '').strip()  # Email type selected by the user at the frontend
+#         print(f"Email type:::::>>>>> {email_type}")
+#         #insert_link = request.POST.get('insert_link', 'false').lower() == 'true'
+
+#         # Decode HTML entities in the email body
+#         email_body_template = html.unescape(email_body)
+
+#         # Parse email addresses
+#         recipient_list = [email.strip() for email in email_field.split(',') if email.strip()]
+#         cc_list = [email.strip() for email in cc_field.split(',') if email.strip()]
+
+#         if not subject or not recipient_list or not email_body_template:
+#             messages.error(request, "Subject, Selected Emails, and Email Content are required.")
+#             return redirect('admin1_compose_email')
+
+#         try:
+#             for email in recipient_list:
+
+#                 print(f"Email Body with HTML for {email}: {email_body_template}")
+#                 # Strip HTML tags for plain text emails
+#                 # personalize_email_body = strip_tags(email_body_template)
+#                 # #personalize_email_body = html2text.html2text(email_body_template)
+#                 # print(f"Before link Email Body for {email}: {personalize_email_body}")
+#                 # email_body_plain = personalize_email_body
+#                 email_body_plain = extract_text_from_html(email_body_template)
+#                 email_body_html = email_body_template
+#                 print(f"Before link Email Body for {email}: {email_body_plain}")
+                
+
+#                 # Check for placeholder in the email body
+#                 if '>>>>>' in email_body_html:
+
+#                     if email_type == "provider":
+#                         # Fetch the unique URL for the email
+#                         provider_url = ProviderURL.objects.filter(provider_email=email).first()
+#                         print(f"Provider URL: {provider_url.provi_url}")
+#                         # Replace placeholder with the appropriate link email_type == "provider" email_type == "superuser"
+#                         if provider_url:
+#                             prov_link = provider_url.provi_url
+#                             prov_link = extract_text_from_html(prov_link)
+#                             email_body_html = email_body_html.replace('>>>>>', prov_link)
+#                             email_body_plain = email_body_plain.replace('>>>>>', prov_link)
+#                             print(f"Email for {email}: Replaced with Provider URL -> {provider_url.provi_url},     link_in_body ->   {prov_link}")
+
+#                         else:
+#                             print(f"No URL found for {email}, keeping placeholder.")
+
+#                     elif email_type == "superuser":
+#                         superuser_url = SuperUserURL.objects.filter(superuser_email=email).first()
+#                         print(f"Superuser URL: {superuser_url}")
+#                         if superuser_url:
+#                             supe_link = superuser_url.super_url
+#                             supe_link = extract_text_from_html(supe_link)
+#                             email_body_html = email_body_html.replace('>>>>>', supe_link)
+#                             email_body_plain = email_body_plain.replace('>>>>>', supe_link)
+#                             print(f"Email for {email}: Replaced with Superuser URL -> {superuser_url.super_url},     link_in_body ->   {supe_link}")
+#                         else:
+#                             print(f"No URL found for {email}, keeping placeholder.")
+#                     else:
+#                         print(f"Invalid email type '{email_type}' for {email}")
+
+#                 print(f"Final Email Body for {email}: {email_body_plain}")
+#                 print(f"Final Email Body for {email}: {email_body_html}")
+                
+#                 # Send email
+#                 email_message = EmailMultiAlternatives(
+#                     subject=subject,
+#                     body=email_body_plain,  # Use plain text body
+#                     from_email='anantsol@neucodetalent.com',
+#                     to=[email],
+#                     cc=cc_list
+#                 )
+#                 email_message.attach_alternative(email_body_html, "text/html")  # HTML content
+#                 #email_message.content_subtype = "html"
+#                 #email_message.content_subtype = "plain"  # Ensure plain text email
+#                 email_message.send(fail_silently=False)
+
+#             messages.success(request, "Emails sent successfully with unique links!")
+#         except Exception as e:
+#             messages.error(request, f"Error sending email: {str(e)}")
+
+#         return redirect('admin1_compose_email')
+
+#     return render(request, 'admin1_compose_email.html')
+
+
+
+
+# # def send_test_email(request):
+# #     # Define the subject, message, and sender email
+# #     subject = 'Test Email'
+# #     message = 'This is a test email from Django.'
+# #     from_email = 'anantsol@neucodetalent.com'
+# #     # Define the list of recipients
+# #     recipients = ['ayush_s@anantsol.com', 'subhayan_r@anantsol.com', 'abbas_j@anantsol.com', 'uthsavi_k@anantsol.com']
+    
+# #     # Loop through the list of recipients and send an email to each one
+# #     for recipient in recipients:
+# #         send_mail(
+# #             subject,
+# #             message,
+# #             from_email,
+# #             [recipient],  # Send email to one recipient at a time
+# #             fail_silently=False,
+# #         )
+    
+# #     # Return a response after sending the emails
+# #     return HttpResponse("Test email sent!")
+
+
+# from django.shortcuts import render
+
+# def error_page(request):
+#     """
+#     View to display an error page for invalid or unauthorized links.
+#     """
+#     return render(request, 'error_page.html', {'message': 'Invalid or unauthorized link.'})
+
+
+
+
+
+# ##################### Page_2: Generate Reports #####################
+
+# # 2. Report Generation Functionality:
+def admin2_generate_reports(request):
+    return render(request, 'admin2_generate_reports.html')
+
+def fetch_client_fromview(request):
+    clients = CliPr.objects.values('client_name').distinct()
+    client_list = [{'client_name': client['client_name']} for client in clients]
+    return JsonResponse({'clients': client_list})
+
+# Getting project on the bases of client:
+def get_projects_by_client_fromview(request, client_name):
+    try:
+        # Fetch the client object by ID
+        # client_name = ClientProject.GET.get('client_name')
+
+        # Fetch projects associated with the client
+        projects = list(CliPr.objects.filter(client_name__iexact=client_name).values('project_name').distinct())
+
+        # Check if projects exist for the given client_name
+        if not projects:
+            return JsonResponse({'error': f'No projects found for client: {client_name}'}, status=404)
+        
+        print(projects)
+        # Return projects and client name
+        return JsonResponse({
+            'client_name': client_name,
+            'projects': projects
+        })
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+
+def report_generation_table_fromview(request):
+    client_name = request.GET.get('client_name', '')
+    project_name = request.GET.get('project_name', '')
+    
+
+    # Filter client projects based on the client and project name
+    # QuerySet to filter the client projects based on provided parameters
+    client_projects = CliPr.objects.all()
+    if client_name:
+        client_projects = client_projects.filter(client_name__icontains=client_name)
+    if project_name:
+        client_projects = client_projects.filter(project_name__icontains=project_name)
+
+    
+    criteria = OptimumMinimumCriteriaView.objects.filter(cp_id__in=client_projects)
+
+    # min_eligible = 'Yes'
+    # optimum_criteria= 'Yes'
+    # Prepare the list to collect the response
+    data = []
+
+    for project in criteria:
+        data.append({
+            'seeker_name': project.seeker_name,
+            'seeker_email': project.seeker_email,
+            'min_eligible': project.minimum_criteria,
+            'optimum_criteria': project.optimum_criteria,
+        })
+    # for project in client_projects:
+    #     data.append({
+    #         'seeker_name': project.seeker_name,
+    #         'seeker_email': project.seeker_email,
+    #         'min_eligible': min_eligible,
+    #         'optimum_criteria': optimum_criteria,
+    #     })
+
+    # Return the collected data as a JSON response
+    return JsonResponse({'client_projects': data}, safe=False)
+
+# from django.db.models import F
+
+# def report_generation_table_fromview(request):
+#     client_name = request.GET.get('client_name', '')
+#     project_name = request.GET.get('project_name', '')
+
+#     # Filter client projects based on the client and project name
+#     client_projects = CliPr.objects.all()
+#     if client_name:
+#         client_projects = client_projects.filter(client_name__icontains=client_name)
+#     if project_name:
+#         client_projects = client_projects.filter(project_name__icontains=project_name)
+
+#     # Join the client_projects and OptimumMinimumCriteriaView based on cp_id and seeker_id
+#     criteria = OptimumMinimumCriteriaView.objects.filter(
+#         cp_id__in=client_projects.values('cp_id'),
+#         seeker_id__in=client_projects.values('seeker_id')
+#     ).annotate(
+#         seeker_name=F('cp_id__seeker_name'),
+#         seeker_email=F('cp_id__seeker_email')
+#     )
+
+#     # Prepare the list to collect the response
+#     data = [
+#         {
+#             'seeker_name': item.seeker_name,
+#             'seeker_email': item.seeker_email,
+#             'optimum_criteria': item.Optimum_Criteria,
+#             'min_criteria': item.Minimum_Criteria,
+#         }
+#         for item in criteria
+#     ]
+
+#     # Return the collected data as a JSON response
+#     return JsonResponse({'client_projects': data}, safe=False)
+
+import os
+import subprocess
+import pandas as pd
+import pickle
+from django.shortcuts import redirect
+from django.contrib import messages
+
+def convert_full_rating_to_dataframe(client_name, project_name):
+    # Validate inputs
+    if not client_name or not project_name:
+        raise ValueError("client_name and project_name are required.")
+ 
+    try:
+        print(f'convert_full_rating_to_dataframe::::::::>>>>>> going on!!!!!!')
+        # Filter data from FullRatingDataView
+        full_rating_data = FullRatingDataView.objects.filter(
+            client_name=client_name, project_name=project_name
+        ).values(
+            'cp_id', 'client_name', 'project_name', 'seeker_name', 'seeker_email',
+            'provider_email', 'relationship', 'question_text', 'competency', 'feedback_value'
+        )
+ 
+        # Convert FullRatingDataView queryset to DataFrame
+        full_rating_df = pd.DataFrame(full_rating_data)
+        print(f'full_rating_df in function::::::::>>>>>> {full_rating_df}')
+ 
+        # Filter data from OpenQuestionView
+        open_question_data = OpenQuestionView.objects.filter(
+            client_name=client_name, project_name=project_name
+        ).values(
+            'cp_id', 'client_name', 'project_name', 'seeker_name', 'seeker_email',
+            'provider_email', 'relationship', 'question_text', 'feedback_text'
+        )
+ 
+        # Convert OpenQuestionView queryset to DataFrame
+        open_question_df = pd.DataFrame(open_question_data)
+        print(f'open_question_df in function::::::::>>>>>> {open_question_df}')
+        # Return the DataFrames
+        return full_rating_df, open_question_df
+ 
+    except Exception as e:
+        raise RuntimeError(f"An error occurred: {str(e)}")
+
+# 2_1. Report Generation Function:
+# def run_generate_reports(request):
+
+#     client_name = request.GET.get('client_name', '').strip()
+#     project_name = request.GET.get('project_name', '').strip()
+    
+#     # Debugging: Log the received parameters
+#     print(f"Received client_name: {client_name}, project_name: {project_name}")
+    
+#     # Fetch and process the data as needed
+#     convert_full_rating_to_dataframe(client_name, project_name)
+#     try:
+#         # Path to your script
+#         script_path = os.path.join(os.path.dirname(__file__), 'generating_reports.py')
+        
+#         # Execute the script
+#         subprocess.run(['python', script_path], check=True)
+        
+#         # Add a success message
+#         messages.success(request, "Reports generated successfully!")
+#     except Exception as e:
+#         # Add an error message in case of failure
+#         messages.error(request, f"Error generating reports: {e}")
+#     return redirect('admin2_generate_reports')  # Redirect back to the same page
+
+def run_generate_reports(request):
+    client_name = request.GET.get('client_name', '').strip()
+    project_name = request.GET.get('project_name', '').strip()
+
+    # Debugging: Log the received parameters
+    print(f"Received client_name: {client_name}, project_name: {project_name}")
+
+    try:
+        # Fetch and process the data as needed
+        full_rating_df, open_question_df = convert_full_rating_to_dataframe(client_name, project_name)
+        print(f'full_rating_df:: {full_rating_df}')
+        print(f'open_question_df:: {open_question_df}')
+        # Save DataFrames to temporary files
+        temp_dir = os.path.join(os.path.dirname(__file__), 'temp')
+        os.makedirs(temp_dir, exist_ok=True)
+        
+        full_rating_path = os.path.join(temp_dir, 'full_rating_df.pkl')
+        open_question_path = os.path.join(temp_dir, 'open_question_df.pkl')
+
+        full_rating_df.to_pickle(full_rating_path)
+        open_question_df.to_pickle(open_question_path)
+
+        # full_rating_path = os.path.join(temp_dir, 'full_rating_df.xlsx')
+        # open_question_path = os.path.join(temp_dir, 'open_question_df.xlsx')
+
+        # # Save the DataFrames as Excel files
+        # full_rating_df.to_excel(full_rating_path, index=False)
+        # open_question_df.to_excel(open_question_path, index=False)
+
+        # Path to your script
+        script_path = os.path.join(os.path.dirname(__file__), 'generating_reports.py')
+
+        # Execute the script and pass file paths as arguments
+        subprocess.run([
+            'python', script_path, full_rating_path, open_question_path
+        ], check=True)
+
+        # Add a success message
+        messages.success(request, "Reports generated successfully!")
+
+    except Exception as e:
+        # Add an error message in case of failure
+        messages.error(request, f"Error generating reports: {e}")
+
+    return redirect('admin2_generate_reports')
+
+
+
+
+# ##################### Page_3: Dashboard #####################
+
+# # 3. Dashboard Functionality:
+def admin3_dashboard(request):
+    return render(request, 'admin3_dashboard.html')
+
+
+from django.db.models import Count
+from django.http import JsonResponse
+
+def overall_dashboard_header(request):
+    # Total participants
+    total_participants = CliPr.objects.count()
+
+    # Status-wise count
+    overall_counts = CliPr.objects.values('status').annotate(count=Count('status'))
+
+    data = {
+        'participants': total_participants,
+        'open': next((item['count'] for item in overall_counts if item['status'] == 'Open'), 0),
+        'in_progress': next((item['count'] for item in overall_counts if item['status'] == 'In-Progress'), 0),
+        'completed': next((item['count'] for item in overall_counts if item['status'] == 'Completed'), 0),
+    }
+    return JsonResponse(data)
+
+
+def filtered_dashboard_header(request):
+    client_name = request.GET.get('client_name', '')
+    project_name = request.GET.get('project_name', '')
+
+    queryset = CliPr.objects.all()
+
+    if client_name:
+        queryset = queryset.filter(client_name__icontains=client_name)
+    if project_name:
+        queryset = queryset.filter(project_name__icontains=project_name)
+
+    # Total participants after filtering
+    total_participants = queryset.count()
+
+    # Status-wise count
+    filtered_counts = queryset.values('status').annotate(count=Count('status'))
+
+    data = {
+        'participants': total_participants,
+        'open': next((item['count'] for item in filtered_counts if item['status'] == 'Open'), 0),
+        'in_progress': next((item['count'] for item in filtered_counts if item['status'] == 'In-Progress'), 0),
+        'completed': next((item['count'] for item in filtered_counts if item['status'] == 'Completed'), 0),
+    }
+    return JsonResponse(data)
+
+def get_filtered_data_fromview(request):
+    client_name = request.GET.get('client_name', '')
+    project_name = request.GET.get('project_name', '')
+
+    # QuerySet to filter the client projects based on provided parameters
+    client_projects = CliPr.objects.all()
+    if client_name:
+        client_projects = client_projects.filter(client_name__icontains=client_name)
+    if project_name:
+        client_projects = client_projects.filter(project_name__icontains=project_name)
+
+    # Prepare the list to collect the response
+    data = []
+
+    for project in client_projects:
+        data.append({
+            'seeker_name': project.seeker_name,
+            'seeker_email': project.seeker_email,
+            'provider_name': project.provider_name,
+            'provider_email': project.provider_email,
+            'relationship': project.relationship,
+            'status': project.status,
+        })
+
+    # Return the collected data as a JSON response
+    return JsonResponse({'client_projects': data}, safe=False)
