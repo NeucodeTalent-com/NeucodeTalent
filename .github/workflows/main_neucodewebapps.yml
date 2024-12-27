@@ -26,8 +26,7 @@ jobs:
         run: |
           python -m venv venv
           source venv/bin/activate
-      - name: Clear pip cache
-        run: pip cache purge
+      
       - name: Install dependencies
         run: pip install -r requirements.txt
         
@@ -67,4 +66,4 @@ jobs:
         with:
           app-name: 'NeucodeWebApps'
           slot-name: 'Production'
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_ABC7996C520D4DBFA9EE8302D7EAEE1B }}
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_B1FD655B2E60466F8ABAB51809E98ED5 }}
