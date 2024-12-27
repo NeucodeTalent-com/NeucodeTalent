@@ -143,8 +143,12 @@ def generate_unique_url(request: HttpRequest, email: str, role: str, cp_id: int,
     # Use provided unique_id or generate a new one
     unique_id = unique_id or uuid.uuid4()
     
-    # Get the base URL (e.g., http://127.0.0.1:8000)
-    base_url = request.build_absolute_uri('/')[:-1]
+    # # Get the base URL (e.g., http://127.0.0.1:8000)
+    # base_url = request.build_absolute_uri('/')[:-1]
+    
+    # Get the global base URL from environment variables or default to the request host
+    global_host = os.environ.get('Hostname_Neucode', 'neucodewebapps-dfd5gae9aac4ayf4.eastus2-01.azurewebsites.net')
+    base_url = f"https://{global_host}"
 
     if role == "provider":
         query_params = {
