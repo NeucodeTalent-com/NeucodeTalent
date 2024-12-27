@@ -66,4 +66,4 @@ jobs:
         with:
           app-name: 'NeucodeWebApps'
           slot-name: 'Production'
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_A859CAF313AB46DAB11B463A498CF3D5 }}
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_13ED4C9F8EFE4E0496917FF813F0CF45 }}
