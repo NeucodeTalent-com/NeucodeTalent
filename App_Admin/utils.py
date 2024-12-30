@@ -147,7 +147,7 @@ def generate_unique_url(request: HttpRequest, email: str, role: str, cp_id: int,
     # base_url = request.build_absolute_uri('/')[:-1]
     
     # Get the global base URL from environment variables or default to the request host
-    global_host = os.environ.get('Hostname_Neucode', 'neucodewebapps-dfd5gae9aac4ayf4.eastus2-01.azurewebsites.net')
+    global_host = os.environ.get('Hostname_Neucode', 'ncprod-gnhjdyhgbpbphsem.eastus2-01.azurewebsites.net')
     base_url = f"https://{global_host}"
 
     if role == "provider":
