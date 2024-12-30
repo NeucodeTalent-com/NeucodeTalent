@@ -3435,10 +3435,10 @@ def generate_master_reports(rd, frd, odb_360, assessment_number, logo_path, logo
 
 # Fetch static files directly from the App_admin static folder
 app_admin_static_dir = os.path.join(os.path.dirname(__file__), 'static')
-icon_path = os.path.join(app_admin_static_dir, 'image/text_icon.png')
-logo_path_p = os.path.join(app_admin_static_dir, 'image/ForPage1.jpg')
-image_path = os.path.join(app_admin_static_dir, 'image/img.png')
-logo_path = os.path.join(app_admin_static_dir, 'image/For_All_pages.jpg')
+icon_path = os.path.join(app_admin_static_dir, 'App_Admin/image/admin_text_icon.png')
+logo_path_p = os.path.join(app_admin_static_dir, 'App_Admin/image/admin_ForPage1.jpg')
+image_path = os.path.join(app_admin_static_dir, 'App_Admin/image/admin_img.png')
+logo_path = os.path.join(app_admin_static_dir, 'App_Admin/image/admin_For_All_pages.jpg')
 
 # generate_master_reports(
 #     rd=RD,

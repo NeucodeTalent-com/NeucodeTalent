@@ -382,7 +382,7 @@ def superuser_pdf(request):
     cell_style.wordWrap = 'CJK'
 
     # Add logo
-    logo_path = finders.find('image/removebg_preview.png')
+    logo_path = finders.find('App_Superuser/image/super_removebg_preview.png')
     if logo_path:
         logo = Image(logo_path, width=200, height=50)
         logo.hAlign = 'CENTER'

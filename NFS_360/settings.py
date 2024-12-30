@@ -24,11 +24,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-qy6%-%f%kd6p+9g7c=u)j3v+zs3h0h*u(mhx+(vss=tnx)!s)c'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-# DEBUG = True
+#DEBUG = True
 DEBUG = False
 
-ALLOWED_HOSTS = ['ncprod-gnhjdyhgbpbphsem.eastus2-01.azurewebsites.net']
-
+ALLOWED_HOSTS = ['ncprod-gnhjdyhgbpbphsem.eastus2-01.azurewebsites.net', '127.0.0.1']
+CSRF_TRUSTED_ORIGINS = ['https://ncprod-gnhjdyhgbpbphsem.eastus2-01.azurewebsites.net', 'https://127.0.0.1']
 
 # Application definition
 
@@ -50,6 +50,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -61,7 +62,7 @@ MIDDLEWARE = [
     # 'NFS_360.middleware.UniqueURLMiddleware',  # Add this line
 ]
 
-
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 # # Channels settings for WebSocket support (Django-Plotly-Dash)
 # ASGI_APPLICATION = 'NFS_360.asgi.application'
  
@@ -167,8 +168,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 STATIC_URL = 'static/'
+# Directory for static file collection
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'App_Admin/static'),  # Ensure this matches your project structure
+    os.path.join(BASE_DIR, 'NFS_360/static'),  # Ensure this matches your project structure
 ]
 
 # Default primary key field type
