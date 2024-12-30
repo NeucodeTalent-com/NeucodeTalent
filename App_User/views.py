@@ -77,26 +77,32 @@ def user2_provider(request):
     email = request.GET.get('email')
     cp_id = request.GET.get('cp_id')
     provider_id = request.GET.get('provider_id')
-    
+    provider_id = int(provider_id) if provider_id else None
+    print(f"provider_id>>>>______:::::: {provider_id}")
+
     # # Optional: Validate query parameters
     # if not unique_id or not email or not cp_id or not provider_id:
     #     return render(request, 'error_page.html', {'message': 'Missing or invalid parameters.'})
     # Fetch all seekers for the given cp_id and provider_id
+
     seekers = UserSeekerView.objects.filter(cp_id=cp_id, provider_id=provider_id)
     print(f"seekers>>>>______:::::: {seekers}")
     print(f"Seekers Query: {seekers.query}")
     print(f"Seekers Results: {list(seekers)}")
     # Optional: Fetch provider details
-    seeker_provider_list = UniqueSeekerProviderView.objects.filter(cp_id=cp_id).values_list('provider_id', flat=True)
+    seeker_provider_list = list(UniqueSeekerProviderView.objects.filter(cp_id=cp_id).values_list('provider_id', flat=True))
     print(seeker_provider_list)
+    print(f'seeker_provider_list: >>>>>>>!!!!!>>>>>> : {seeker_provider_list}')
 
     # Initialize seekerid
     seekerid = None
 
     # Check if provider_id exists in the list of provider_ids
     if provider_id in seeker_provider_list:
-        seekerid_obj = get_object_or_404(UniqueSeekerProviderView, cp_id=cp_id, provider_id=provider_id)
+        seekerid_obj = UniqueSeekerProviderView.objects.filter(cp_id=cp_id, provider_id=provider_id).first()
+        print(f'seekerid_obj: >>>>>>>: {seekerid_obj}')
         seekerid = seekerid_obj.seeker_id
+        print(f'seekerid: >>>>>>>: {seekerid}')
     else:
         seekerid = None
 
@@ -128,6 +134,9 @@ def user3_seeking(request):
     email = request.GET.get('email')
     cp_id = request.GET.get('cp_id')
     provider_id = request.GET.get('provider_id')
+    print(f'provider_id: >>>>>>>: {provider_id}')
+    seeker_id = request.GET.get('seeker_id')
+    print(f'seeker_id: >>>>>>>: {seeker_id}')
 
     # Optional: Validate query parameters
     # if not unique_id or not email or not cp_id or not provider_id:
@@ -135,7 +144,10 @@ def user3_seeking(request):
 
     # Optional: Fetch provider details
     # provider = get_object_or_404(UserProviderView, cp_id=cp_id, provider_id=provider_id)
-    providers = UserProviderView.objects.filter(cp_id=cp_id, provider_id=provider_id)
+    providers = UserProviderView.objects.filter(cp_id=cp_id, seeker_id= seeker_id)
+
+    # provider_seeker = UniqueSeekerProviderView.objects.filter(cp_id=cp_id, provider_id=provider_id).values_list('seeker_id', flat=True)
+    # print(provider_seeker)
 
     context = {
         'unique_id': unique_id,
