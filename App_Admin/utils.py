@@ -105,6 +105,7 @@ from django.utils.http import urlencode
 from django.http import HttpRequest
 import uuid
 from bs4 import BeautifulSoup
+import os
 
 def extract_text_from_html(html_content: str) -> str:
     """
