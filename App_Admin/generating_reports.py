@@ -1880,6 +1880,7 @@ from PyPDF2 import PdfMerger
 
 # PIL for Image Handling
 from PIL import Image as PILImage
+from reportlab.platypus import Image
 
 # Azure Storage (Optional)
 from azure.storage.blob import BlobServiceClient
@@ -1924,8 +1925,18 @@ full_rating_df.rename(columns= {'seeker_name':'Seeker Name','seeker_email': 'See
 open_question_df.rename(columns= {'seeker_name':'Seeker Name','seeker_email': 'Seeker Email', 'relationship':'Relationship'
                                 , 'provider_email': 'Provider Email', 'question_text': 'Statements'
                                 , 'feedback_value': 'Rating', 'feedback_text': 'Response'}, inplace = True)
+
+# full_rating_df.rename(columns= {'SeekerName':'Seeker Name','SeekerEmail': 'Seeker Email', 'relationship':'Relationship'
+#                                 , 'ProviderEmail': 'Provider Email', 'QuestionText': 'Statements', 'Competency': 'Competency mapped to Statement'
+#                                 , 'FeedbackValue': 'Rating'}, inplace = True)
+# open_question_df.rename(columns= {'SeekerName':'Seeker Name','SeekerEmail': 'Seeker Email', 'relationship':'Relationship'
+#                                 , 'ProviderEmail': 'Provider Email', 'QuestionText': 'Statements'
+#                                 , 'FeedbackValue': 'Rating', 'FeedbackText': 'Response'}, inplace = True)
+
 ODB_360=open_question_df
 FRD=full_rating_df
+
+
 
 print(f'FRD::::::::>>>>>>> {FRD.head()}')  # Check FRD data
 print(f'ODB::::::::>>>>>>> {ODB_360.head()}')  # Check ODB_360 data
@@ -2930,40 +2941,178 @@ def create_hidden_strength_page(pdf_path, logo_path, db, email):
     c.save()
     print("Hidden Strength page generated successfully")
 
+# # Function to generate bar images
+# def generate_bar_image(value, color, is_reverse=False, text_color='black'):
+#     fig, ax = plt.subplots(figsize=(5, 1))
+#     if is_reverse:
+#         ax.barh([0], [value], color=color, height=0.9, left=5 - value)
+#         x_pos = 5 - value / 2
+#     else:
+#         ax.barh([0], [value], color=color, height=0.9)
+#         x_pos = value / 2
+
+#     ax.set_xlim(0, 5)
+#     ax.axis('off')
+
+#     # Add text inside the bar
+#     ax.text(x_pos, 0, f"{value:.2f}", va='center', ha='right', color=text_color, fontsize=22)
+
+#     buf = io.BytesIO()
+#     plt.savefig(buf, format='png', dpi=100, bbox_inches='tight', pad_inches=0)
+#     plt.close(fig)
+#     buf.seek(0)
+
+#     # Return buffer for PILImage manipulation
+#     return buf
+
 # Function to generate bar images
 def generate_bar_image(value, color, is_reverse=False, text_color='black'):
     fig, ax = plt.subplots(figsize=(5, 1))
     if is_reverse:
-        ax.barh([0], [value], color=color, height=0.9, left=5 - value)
+        ax.barh([0], [value], color=color, height=0.2, left=5 - value)
         x_pos = 5 - value / 2
     else:
-        ax.barh([0], [value], color=color, height=0.9)
+        ax.barh([0], [value], color=color, height=0.2)
         x_pos = value / 2
-
+ 
     ax.set_xlim(0, 5)
     ax.axis('off')
-
+ 
     # Add text inside the bar
-    ax.text(x_pos, 0, f"{value:.2f}", va='center', ha='right', color=text_color, fontsize=22)
-
+    ax.text(x_pos, 0, f"{value:.2f}", va='center', ha='right', color=text_color, fontsize=22, weight='bold')
+ 
     buf = io.BytesIO()
     plt.savefig(buf, format='png', dpi=100, bbox_inches='tight', pad_inches=0)
     plt.close(fig)
     buf.seek(0)
-
-    # Return buffer for PILImage manipulation
+    print("generate_bar_image")
     return buf
 
+# # Function to create the table with bar charts
+# def create_bar_chart_table(db, email):
+#     df = blind_spots(db, email)  # Fetch data dynamically
+
+#     if df.empty:
+#         return None
+
+#     table_data = []
+
+#     styles = getSampleStyleSheet()
+#     header_style = styles["Heading4"]
+#     header_style.alignment = 0  # Left-aligned
+#     header_style.textColor = colors.white
+#     header_style.fontSize = 13
+#     header_style.fontName = "Helvetica-Bold"
+#     header = [Paragraph(col, header_style) for col in df.columns]
+#     table_data.append(header)
+
+#     body_text_style = styles["BodyText"]
+#     body_text_style.fontSize = 12
+
+#     for _, row in df.iterrows():
+#         statement = Paragraph(row['Statements'], body_text_style)  # Wrap text
+#         self_value = row['Self']
+#         others_value = row['Other']
+
+#         # Generate bar images
+#         self_bar_buf = generate_bar_image(self_value, "#44d65f", is_reverse=True, text_color='white')
+#         others_bar_buf = generate_bar_image(others_value, "#e66c37", is_reverse=False, text_color='black')
+
+#         # Convert bar images to RLImage
+#         self_bar_img = RLImage(self_bar_buf, width=120, height=45)  # Corrected
+#         others_bar_img = RLImage(others_bar_buf, width=120, height=45)  # Corrected
+
+#         # Add row to table data
+#         table_data.append([statement, self_bar_img, others_bar_img])
+
+#     table_style = TableStyle([ 
+#         ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#007FFF")),  # Header background
+#         ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+#         ("ALIGN", (0, 1), (-1, -1), "CENTER"),
+#         ("ALIGN", (0, 0), (-1, 0), "LEFT"),
+#         ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+#         ("BACKGROUND", (0, 1), (-1, -1), colors.whitesmoke),
+#         ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.lightgrey]),
+#         ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
+#     ])
+
+#     table = Table(table_data, colWidths=[280, 120, 120], rowHeights=50)
+#     table.setStyle(table_style)
+#     return table
+
+
+# # Function to create the full PDF with canvas and table
+# def create_blind_spots(db, email, pdf_path, logo_path):
+#     c = canvas.Canvas(pdf_path, pagesize=A4)
+#     width, height = A4
+
+#     # Add logo
+#     logo_width = 1.8 * inch
+#     logo_height = 0.41 * inch
+#     c.drawImage(logo_path, width - logo_width - 30, height - logo_height - 30, 
+#                 width=logo_width, height=logo_height)
+
+#     # Add "Blind Spot" heading
+#     heading_y = height - logo_height - 50
+#     c.setFont("Helvetica-Bold", 20)
+#     c.drawString(50, heading_y, "Blind Spots")
+
+#     # Add underline
+#     underline_y = heading_y - 10
+#     c.setStrokeColor(colors.black)
+#     c.setLineWidth(1.5)
+#     c.line(50, underline_y, width - 50, underline_y)
+
+#     # Draw blue rectangle marker
+#     marker_width = 9
+#     marker_height = 40
+#     c.setFillColorRGB(17 / 255, 141 / 255, 255 / 255)
+#     c.rect(35, heading_y - 12, marker_width, marker_height, fill=1, stroke=0)
+
+#     # Add description text
+#     description_y = underline_y - 40
+#     c.setFont("Helvetica", 14)
+#     c.setFillColor(colors.black)
+#     c.drawString(50, description_y, "Below is a summary of your blind spots, where your self-ratings are higher than")
+#     description_y -= 24
+#     c.drawString(50, description_y, "those of others. Reflect on these areas to explore potential gaps in self-perception")
+#     description_y -= 24
+#     c.drawString(50, description_y, "and identify opportunities to align your actions with others' expectations.")
+#     description_y -= 40  # Add extra spacing below the description text
+
+#     # Fetch and create the table
+#     table = create_bar_chart_table(db, email)
+
+#     if table is None:
+#         # Draw "No Blind Spots Data Available" message
+#         c.setFont("Helvetica", 14)
+#         c.setFillColor(colors.black)
+#         c.drawString(50, description_y, "No Blind Spots Data Available")
+#     else:
+#         # Add the table below the description
+#         table.wrapOn(c, width, height)
+#         table.drawOn(c, 35, description_y - 350)  # Adjust table position
+
+#     # Save the canvas with the content
+#     c.save()
+
+# # Function to merge content and table into final PDF
+# def create_blind_spots_page(pdf_path, logo_path, db, email):
+#     create_blind_spots(db, email, pdf_path, logo_path)
+#     print("BlindSpot PDF generated successfully")
 
 # Function to create the table with bar charts
 def create_bar_chart_table(db, email):
     df = blind_spots(db, email)  # Fetch data dynamically
-
+    print("Inside>>>>>> create_bar_chart_table")
     if df.empty:
+        # Return None if there is no data
         return None
-
+ 
+    # Proceed with generating the table if data exists
     table_data = []
-
+ 
+    # Prepare the header
     styles = getSampleStyleSheet()
     header_style = styles["Heading4"]
     header_style.alignment = 0  # Left-aligned
@@ -2972,70 +3121,73 @@ def create_bar_chart_table(db, email):
     header_style.fontName = "Helvetica-Bold"
     header = [Paragraph(col, header_style) for col in df.columns]
     table_data.append(header)
-
+ 
+    # Customize body text style
     body_text_style = styles["BodyText"]
     body_text_style.fontSize = 12
-
+ 
     for _, row in df.iterrows():
         statement = Paragraph(row['Statements'], body_text_style)  # Wrap text
         self_value = row['Self']
         others_value = row['Other']
-
+ 
         # Generate bar images
         self_bar_buf = generate_bar_image(self_value, "#44d65f", is_reverse=True, text_color='white')
-        others_bar_buf = generate_bar_image(others_value, "#e66c37", is_reverse=False, text_color='black')
-
-        # Convert bar images to RLImage
-        self_bar_img = RLImage(self_bar_buf, width=120, height=45)  # Corrected
-        others_bar_img = RLImage(others_bar_buf, width=120, height=45)  # Corrected
-
+        others_bar_buf = generate_bar_image(others_value, "#e66c37", is_reverse=False, text_color='white')
+        
+        # Convert bar images to Image objects
+        self_bar_img = Image(self_bar_buf, width=120, height=20)  # This uses reportlab.platypus.Image
+        others_bar_img = Image(others_bar_buf, width=120, height=20)  # Same here
+ 
         # Add row to table data
         table_data.append([statement, self_bar_img, others_bar_img])
-
-    table_style = TableStyle([ 
+ 
+    # Table styles
+    table_style = TableStyle([
         ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#007FFF")),  # Header background
         ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
         ("ALIGN", (0, 1), (-1, -1), "CENTER"),
         ("ALIGN", (0, 0), (-1, 0), "LEFT"),
         ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-        ("BACKGROUND", (0, 1), (-1, -1), colors.whitesmoke),
-        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.lightgrey]),
+        # Apply alternating row background to the first column only
+        ("ROWBACKGROUNDS", (0, 1), (0, -1), [colors.white, colors.lightgrey]),
         ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
     ])
-
-    table = Table(table_data, colWidths=[280, 120, 120], rowHeights=50)
+ 
+    # Create the table
+    table = Table(table_data, colWidths=[280, 120, 120], rowHeights=[30] + [50] * (len(table_data) - 1))
     table.setStyle(table_style)
+    print("create_bar_chart_table")
     return table
-
-
+ 
 # Function to create the full PDF with canvas and table
 def create_blind_spots(db, email, pdf_path, logo_path):
     c = canvas.Canvas(pdf_path, pagesize=A4)
     width, height = A4
-
+ 
     # Add logo
     logo_width = 1.8 * inch
     logo_height = 0.41 * inch
-    c.drawImage(logo_path, width - logo_width - 30, height - logo_height - 30, 
+    c.drawImage(logo_path, width - logo_width - 30, height - logo_height - 30,
                 width=logo_width, height=logo_height)
-
+ 
     # Add "Blind Spot" heading
     heading_y = height - logo_height - 50
     c.setFont("Helvetica-Bold", 20)
     c.drawString(50, heading_y, "Blind Spots")
-
+ 
     # Add underline
     underline_y = heading_y - 10
     c.setStrokeColor(colors.black)
     c.setLineWidth(1.5)
     c.line(50, underline_y, width - 50, underline_y)
-
+ 
     # Draw blue rectangle marker
     marker_width = 9
     marker_height = 40
     c.setFillColorRGB(17 / 255, 141 / 255, 255 / 255)
     c.rect(35, heading_y - 12, marker_width, marker_height, fill=1, stroke=0)
-
+ 
     # Add description text
     description_y = underline_y - 40
     c.setFont("Helvetica", 14)
@@ -3046,10 +3198,10 @@ def create_blind_spots(db, email, pdf_path, logo_path):
     description_y -= 24
     c.drawString(50, description_y, "and identify opportunities to align your actions with others' expectations.")
     description_y -= 40  # Add extra spacing below the description text
-
+ 
     # Fetch and create the table
     table = create_bar_chart_table(db, email)
-
+ 
     if table is None:
         # Draw "No Blind Spots Data Available" message
         c.setFont("Helvetica", 14)
@@ -3059,50 +3211,120 @@ def create_blind_spots(db, email, pdf_path, logo_path):
         # Add the table below the description
         table.wrapOn(c, width, height)
         table.drawOn(c, 35, description_y - 350)  # Adjust table position
-
+    print("create_blind_spots")
     # Save the canvas with the content
     c.save()
-
+ 
 # Function to merge content and table into final PDF
 def create_blind_spots_page(pdf_path, logo_path, db, email):
     create_blind_spots(db, email, pdf_path, logo_path)
     print("BlindSpot PDF generated successfully")
 
+from reportlab.platypus import Table, TableStyle, Paragraph, Spacer, SimpleDocTemplate
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import letter
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.pdfgen import canvas
+from reportlab.lib.units import inch
+import pandas as pd
 
-def detailed_statements(db,email):
-    db=db[db['Seeker Email']==email]
-    return db[['Statements','Competency mapped to Statement','Others','Relationship','Rating']].sort_values(by=['Competency mapped to Statement','Statements']).rename(columns={'Competency mapped to Statement':'Competency'})
+# def detailed_statements(db,email):
+#     db=db[db['Seeker Email']==email]
+#     return db[['Statements','Competency mapped to Statement','Others','Relationship','Rating']].sort_values(by=['Competency mapped to Statement','Statements']).rename(columns={'Competency mapped to Statement':'Competency'})
 
-def all_competency_average(db,email):
-    db=db[db['Seeker Email']==email]
-    return pd.DataFrame(db.groupby('Competency mapped to Statement')['Rating'].mean()).reset_index().rename(columns={'Competency mapped to Statement':'Statements'})
+# def all_competency_average(db,email):
+#     db=db[db['Seeker Email']==email]
+#     return pd.DataFrame(db.groupby('Competency mapped to Statement')['Rating'].mean()).reset_index().rename(columns={'Competency mapped to Statement':'Statements'})
 
+# Helper functions for dynamic data
+def detailed_statements(db, email):
+    db = db[db['Seeker Email'] == email]
+    return (
+        db[['Statements', 'Competency mapped to Statement', 'Others', 'Relationship', 'Rating']]
+        .sort_values(by=['Competency mapped to Statement', 'Statements'])
+        .rename(columns={'Competency mapped to Statement': 'Competency'})
+    )
+ 
+def all_competency_average(db, email):
+    db = db[db['Seeker Email'] == email]
+    return (
+        pd.DataFrame(db.groupby('Competency mapped to Statement')['Rating'].mean())
+        .reset_index()
+        .rename(columns={'Competency mapped to Statement': 'Statements'})
+    )
+
+# def draw_header(canvas, logo_path):
+#     width, height = letter
+
+#     # Add logo
+#     logo_width = 1.8 * inch
+#     logo_height = 0.41 * inch
+#     canvas.drawImage(logo_path, width - logo_width - 30, height - logo_height - 30, 
+#                      width=logo_width, height=logo_height)
+
+#     # Add "Detailed Feedback" heading
+#     heading_y = height - logo_height - 50
+#     canvas.setFont("Helvetica-Bold", 20)
+#     canvas.drawString(50, heading_y, "Detailed Feedback")
+
+#     # Add underline
+#     underline_y = heading_y - 10
+#     canvas.setStrokeColor(colors.black)
+#     canvas.setLineWidth(1.5)
+#     canvas.line(50, underline_y, width - 50, underline_y)
+
+#     # Draw blue rectangle marker next to the heading
+#     marker_width = 9
+#     marker_height = 40
+#     canvas.setFillColorRGB(17 / 255, 141 / 255, 255 / 255)  # Light blue
+#     canvas.rect(35, heading_y - 12, marker_width, marker_height, fill=1, stroke=0)
+
+#     # Add description text
+#     description_y = underline_y - 40
+#     canvas.setFont("Helvetica", 14)
+#     canvas.setFillColor(colors.black)
+#     canvas.drawString(50, description_y, "The detailed statement-wise rating provides your complete group-wise breakdown")
+#     description_y -= 24
+#     canvas.drawString(50, description_y, "of your feedback on each statement.")
+#     description_y -= 24
+
+
+# def draw_logo(canvas, logo_path):
+#     width, height = letter
+
+#     # Add logo on subsequent pages
+#     logo_width = 1.8 * inch
+#     logo_height = 0.41 * inch
+#     canvas.drawImage(logo_path, width - logo_width - 30, height - logo_height - 30, 
+#                 width=logo_width, height=logo_height)
+
+# Functions for drawing headers and logos
 def draw_header(canvas, logo_path):
     width, height = letter
-
+ 
     # Add logo
     logo_width = 1.8 * inch
     logo_height = 0.41 * inch
-    canvas.drawImage(logo_path, width - logo_width - 30, height - logo_height - 30, 
+    canvas.drawImage(logo_path, width - logo_width - 30, height - logo_height - 30,
                      width=logo_width, height=logo_height)
-
+ 
     # Add "Detailed Feedback" heading
     heading_y = height - logo_height - 50
     canvas.setFont("Helvetica-Bold", 20)
     canvas.drawString(50, heading_y, "Detailed Feedback")
-
+ 
     # Add underline
     underline_y = heading_y - 10
     canvas.setStrokeColor(colors.black)
     canvas.setLineWidth(1.5)
     canvas.line(50, underline_y, width - 50, underline_y)
-
+ 
     # Draw blue rectangle marker next to the heading
     marker_width = 9
     marker_height = 40
     canvas.setFillColorRGB(17 / 255, 141 / 255, 255 / 255)  # Light blue
     canvas.rect(35, heading_y - 12, marker_width, marker_height, fill=1, stroke=0)
-
+ 
     # Add description text
     description_y = underline_y - 40
     canvas.setFont("Helvetica", 14)
@@ -3110,111 +3332,214 @@ def draw_header(canvas, logo_path):
     canvas.drawString(50, description_y, "The detailed statement-wise rating provides your complete group-wise breakdown")
     description_y -= 24
     canvas.drawString(50, description_y, "of your feedback on each statement.")
-    description_y -= 24
-
-
+ 
 def draw_logo(canvas, logo_path):
     width, height = letter
-
+ 
     # Add logo on subsequent pages
     logo_width = 1.8 * inch
     logo_height = 0.41 * inch
-    canvas.drawImage(logo_path, width - logo_width - 30, height - logo_height - 30, 
-                width=logo_width, height=logo_height)
+    canvas.drawImage(logo_path, width - logo_width - 30, height - logo_height - 30,
+                     width=logo_width, height=logo_height)
+
+# def detailed_statement_page(logo_path, db, email, pdf_path):
+#     # Create a canvas for the header and other content
+#     def header(canvas, doc):
+#         draw_header(canvas, logo_path)
+
+#     def subsequent_pages(canvas, doc):
+#         draw_logo(canvas, logo_path)
+#         canvas.saveState()
+#         table_header.wrapOn(canvas, doc.width, doc.topMargin)
+#         table_header.drawOn(canvas, doc.leftMargin -21, doc.height + doc.topMargin - table_header._height - 4)
+#         canvas.restoreState()
+
+#         # Add spacer to provide space below the header on subsequent pages
+#         elements.insert(0, Spacer(1, 0.35 * inch))  # Adjust the value as needed
+
+#     # Initialize the document
+#     doc = SimpleDocTemplate(pdf_path, pagesize=letter)
+#     elements = []
+
+#     # Add spacer to provide space below the description text
+#     elements.append(Spacer(1, 1.8 * inch))
+
+#     # Generate table data dynamically
+#     competency_averages = all_competency_average(db, email)
+#     statement_data = detailed_statements(db, email)
+
+#     table_data = [["Statements", "Others", "Relationship", "Rating"]]
+#     styles = getSampleStyleSheet()
+#     style_left_top = ParagraphStyle(name="LeftTop", parent=styles["Normal"], alignment=0, fontSize=12)
+#     style_bold_left_top = ParagraphStyle(name="NormalLeftTop", parent=styles["Normal"], alignment=0, fontName="Helvetica", fontSize=12)
+
+#     row_index = 1  # To keep track of rows for merging
+#     merging_rules = []  # To collect merging rules dynamically
+#     bold_rows = []  # To store indices of rows to be bolded
+
+#     # Iterate over each competency and dynamically build rows
+#     for _, competency_row in competency_averages.iterrows():
+#         competency_name = competency_row["Statements"]
+#         avg_rating = f"{competency_row['Rating']:.2f}"
+#         table_data.append([Paragraph(competency_name, style_bold_left_top), "", "", Paragraph(avg_rating, style_bold_left_top)])  # Bold rating
+#         merging_rules.append(("SPAN", (0, row_index), (2, row_index)))  # Merge Columns 1-3
+#         bold_rows.append(row_index)  # Mark this row for bold styling
+#         row_index += 1  
+
+#         # Filter statements for this competency
+#         competency_statements = statement_data[statement_data["Competency"] == competency_name]
+
+#         # Iterate through each unique statement
+#         for statement in competency_statements["Statements"].unique():
+#             # Filter rows for this statement
+#             statement_rows = competency_statements[competency_statements["Statements"] == statement]
+
+#             # Add the first row for "Self"
+#             self_row = statement_rows[statement_rows["Others"] == "Self"].iloc[0]
+#             table_data.append([Paragraph(statement, style_left_top), Paragraph("Self", style_bold_left_top), "", f"{self_row['Rating']:.2f}"])
+#             statement_start_row = row_index
+#             row_index += 1
+
+#             # Add "Others" row with average and individual roles
+#             others_rows = statement_rows[statement_rows["Others"] == "Others"]
+#             avg_others = f"{others_rows['Rating'].mean():.2f}"
+#             table_data.append(["", Paragraph("Others", style_bold_left_top), "", avg_others])  # Average row
+#             others_start_row = row_index
+#             row_index += 1
+
+#             # Group by "Relationship" and calculate the average rating
+#             grouped_relationships = others_rows.groupby("Relationship").mean(numeric_only=True).reset_index()
+
+#             # Add individual role rows for Others, showing the averaged rating for each relationship
+#             for _, group_row in grouped_relationships.iterrows():
+#                 table_data.append(["", "", group_row["Relationship"], f"{group_row['Rating']:.2f}"])
+#                 row_index += 1
+
+#             # Merging rules for Statements and Others
+#             merging_rules.append(("SPAN", (0, statement_start_row), (0, row_index - 1)))  # Merge Column 1 (Statements)
+#             merging_rules.append(("SPAN", (1, others_start_row), (1, row_index - 1)))  # Merge Column 2 (Others)
+
+#     # Create and style the table header for subsequent pages
+#     table_header_data = [["Statements", "Others", "Relationship", "Rating"]]
+#     table_header = Table(table_header_data, colWidths=[230, 100, 120, 60])
+#     table_header.setStyle(TableStyle([
+#         ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#007FFF")),  
+#         ("TEXTCOLOR", (0, 0), (-1, -1), colors.white),  
+#         ("ALIGN", (0, 0), (-1, -1), "LEFT"),  
+#         ("FONTSIZE", (0, 0), (-1, -1), 13),  
+#         ("FONTNAME", (0, 0), (-1, -1), "Helvetica-Bold"),  
+#         ("BOTTOMPADDING", (0, 0), (-1, -1), 12),
+#         ("GRID", (0, 0), (-1, -1), 1, colors.black),
+#         ("ALIGN", (1, 1), (1, -1), "LEFT"),       # Left align column 2 (Others)
+#         ("VALIGN", (1, 1), (1, -1), "MIDDLE"),    # Center vertically for column 2
+#     ]))
+
+#     # Create and style the main table with data and merging rules applied dynamically.
+#     table = Table(table_data, colWidths=[230, 100, 120, 60])
+#     table.setStyle(TableStyle([
+#         ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#007FFF")),  
+#         ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),  
+#         ("ALIGN", (0, 0), (-1, 0), "LEFT"),  
+#         ("FONTSIZE", (0, 0), (-1, 0), 13),  
+#         ("FONTSIZE", (0, 1), (-1, -1), 12),  
+#         ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),  
+#         ("BOTTOMPADDING", (0, 0), (-1, 0), 12),  
+#         ("TEXTCOLOR", (0, 1), (-1, -1), colors.black),  
+#         ("ALIGN", (0, 1), (-1, -1), "LEFT"),  
+#         ("VALIGN", (0, 0), (-1, -1), "TOP"),  
+#         ("GRID", (0, 0), (-1, -1), 1, colors.black),
+#         ("ALIGN", (1, 1), (1, -1), "LEFT"),       # Left align column 2 (Others)
+#         ("VALIGN", (1, 1), (1, -1), "MIDDLE"),    # Center vertically for column 2
+#     ]))
+
+#     # Apply dynamically generated merging rules
+#     for merge_rule in merging_rules:
+#         table.setStyle(TableStyle([merge_rule]))
+
+#     # Add table to elements
+#     elements.append(table)
+
+#     # Build the PDF with the header and subsequent pages
+#     doc.build(elements, onFirstPage=header, onLaterPages=subsequent_pages)
+#     print("Detailed Statement PDF generated successfully")
 
 def detailed_statement_page(logo_path, db, email, pdf_path):
     # Create a canvas for the header and other content
     def header(canvas, doc):
         draw_header(canvas, logo_path)
-
+ 
     def subsequent_pages(canvas, doc):
         draw_logo(canvas, logo_path)
-        canvas.saveState()
-        table_header.wrapOn(canvas, doc.width, doc.topMargin)
-        table_header.drawOn(canvas, doc.leftMargin -21, doc.height + doc.topMargin - table_header._height - 4)
-        canvas.restoreState()
-
-        # Add spacer to provide space below the header on subsequent pages
-        elements.insert(0, Spacer(1, 0.35 * inch))  # Adjust the value as needed
-
+ 
     # Initialize the document
     doc = SimpleDocTemplate(pdf_path, pagesize=letter)
     elements = []
-
+ 
     # Add spacer to provide space below the description text
     elements.append(Spacer(1, 1.8 * inch))
-
+ 
     # Generate table data dynamically
     competency_averages = all_competency_average(db, email)
     statement_data = detailed_statements(db, email)
-
+ 
     table_data = [["Statements", "Others", "Relationship", "Rating"]]
     styles = getSampleStyleSheet()
     style_left_top = ParagraphStyle(name="LeftTop", parent=styles["Normal"], alignment=0, fontSize=12)
-    style_bold_left_top = ParagraphStyle(name="NormalLeftTop", parent=styles["Normal"], alignment=0, fontName="Helvetica", fontSize=12)
-
+    style_bold_left_top = ParagraphStyle(name="BoldLeftTop", parent=styles["Normal"], alignment=0, fontName="Helvetica-Bold", fontSize=12)
+ 
     row_index = 1  # To keep track of rows for merging
     merging_rules = []  # To collect merging rules dynamically
-    bold_rows = []  # To store indices of rows to be bolded
-
+ 
     # Iterate over each competency and dynamically build rows
     for _, competency_row in competency_averages.iterrows():
         competency_name = competency_row["Statements"]
         avg_rating = f"{competency_row['Rating']:.2f}"
         table_data.append([Paragraph(competency_name, style_bold_left_top), "", "", Paragraph(avg_rating, style_bold_left_top)])  # Bold rating
         merging_rules.append(("SPAN", (0, row_index), (2, row_index)))  # Merge Columns 1-3
-        bold_rows.append(row_index)  # Mark this row for bold styling
-        row_index += 1  
-
+        row_index += 1
+ 
         # Filter statements for this competency
         competency_statements = statement_data[statement_data["Competency"] == competency_name]
-
+ 
         # Iterate through each unique statement
         for statement in competency_statements["Statements"].unique():
             # Filter rows for this statement
             statement_rows = competency_statements[competency_statements["Statements"] == statement]
-
+ 
             # Add the first row for "Self"
-            self_row = statement_rows[statement_rows["Others"] == "Self"].iloc[0]
-            table_data.append([Paragraph(statement, style_left_top), Paragraph("Self", style_bold_left_top), "", f"{self_row['Rating']:.2f}"])
+            self_rows = statement_rows[statement_rows["Others"] == "Self"]
+            if not self_rows.empty:
+                self_row = self_rows.iloc[0]
+                table_data.append([Paragraph(statement, style_left_top), Paragraph("Self", style_bold_left_top), "", f"{self_row['Rating']:.2f}"])
+            else:
+                table_data.append([Paragraph(statement, style_left_top), Paragraph("Self", style_bold_left_top), "", "-"])  # Hyphen for missing Self data
+ 
             statement_start_row = row_index
             row_index += 1
-
+ 
             # Add "Others" row with average and individual roles
             others_rows = statement_rows[statement_rows["Others"] == "Others"]
-            avg_others = f"{others_rows['Rating'].mean():.2f}"
-            table_data.append(["", Paragraph("Others", style_bold_left_top), "", avg_others])  # Average row
-            others_start_row = row_index
-            row_index += 1
-
-            # Group by "Relationship" and calculate the average rating
-            grouped_relationships = others_rows.groupby("Relationship").mean(numeric_only=True).reset_index()
-
-            # Add individual role rows for Others, showing the averaged rating for each relationship
-            for _, group_row in grouped_relationships.iterrows():
-                table_data.append(["", "", group_row["Relationship"], f"{group_row['Rating']:.2f}"])
+            if not others_rows.empty:
+                avg_others = f"{others_rows['Rating'].mean():.2f}"
+                table_data.append(["", Paragraph("Others", style_bold_left_top), "", avg_others])  # Average row
+                others_start_row = row_index
                 row_index += 1
-
-            # Merging rules for Statements and Others
-            merging_rules.append(("SPAN", (0, statement_start_row), (0, row_index - 1)))  # Merge Column 1 (Statements)
-            merging_rules.append(("SPAN", (1, others_start_row), (1, row_index - 1)))  # Merge Column 2 (Others)
-
-    # Create and style the table header for subsequent pages
-    table_header_data = [["Statements", "Others", "Relationship", "Rating"]]
-    table_header = Table(table_header_data, colWidths=[230, 100, 120, 60])
-    table_header.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#007FFF")),  
-        ("TEXTCOLOR", (0, 0), (-1, -1), colors.white),  
-        ("ALIGN", (0, 0), (-1, -1), "LEFT"),  
-        ("FONTSIZE", (0, 0), (-1, -1), 13),  
-        ("FONTNAME", (0, 0), (-1, -1), "Helvetica-Bold"),  
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 12),
-        ("GRID", (0, 0), (-1, -1), 1, colors.black),
-        ("ALIGN", (1, 1), (1, -1), "LEFT"),       # Left align column 2 (Others)
-        ("VALIGN", (1, 1), (1, -1), "MIDDLE"),    # Center vertically for column 2
-    ]))
-
-    # Create and style the main table with data and merging rules applied dynamically.
+ 
+                # Group by "Relationship" and calculate the average rating
+                grouped_relationships = others_rows.groupby("Relationship").mean(numeric_only=True).reset_index()
+ 
+                # Add individual role rows for Others, showing the averaged rating for each relationship
+                for _, group_row in grouped_relationships.iterrows():
+                    table_data.append(["", "", group_row["Relationship"], f"{group_row['Rating']:.2f}"])
+                    row_index += 1
+ 
+                # Merging rules for Statements and Others
+                merging_rules.append(("SPAN", (0, statement_start_row), (0, row_index - 1)))  # Merge Column 1 (Statements)
+                merging_rules.append(("SPAN", (1, others_start_row), (1, row_index - 1)))  # Merge Column 2 (Others)
+            else:
+                table_data.append(["", Paragraph("Others", style_bold_left_top), "", "-"])  # Hyphen for missing Others data
+ 
+    # Create the main table with data and merging rules
     table = Table(table_data, colWidths=[230, 100, 120, 60])
     table.setStyle(TableStyle([
         ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#007FFF")),  
@@ -3227,21 +3552,20 @@ def detailed_statement_page(logo_path, db, email, pdf_path):
         ("TEXTCOLOR", (0, 1), (-1, -1), colors.black),  
         ("ALIGN", (0, 1), (-1, -1), "LEFT"),  
         ("VALIGN", (0, 0), (-1, -1), "TOP"),  
-        ("GRID", (0, 0), (-1, -1), 1, colors.black),
-        ("ALIGN", (1, 1), (1, -1), "LEFT"),       # Left align column 2 (Others)
-        ("VALIGN", (1, 1), (1, -1), "MIDDLE"),    # Center vertically for column 2
+        ("GRID", (0, 0), (-1, -1), 1, colors.lightgrey),
     ]))
-
-    # Apply dynamically generated merging rules
+ 
     for merge_rule in merging_rules:
         table.setStyle(TableStyle([merge_rule]))
-
-    # Add table to elements
+ 
+    # Add the table to the document
     elements.append(table)
-
+ 
     # Build the PDF with the header and subsequent pages
     doc.build(elements, onFirstPage=header, onLaterPages=subsequent_pages)
     print("Detailed Statement PDF generated successfully")
+
+
 
 def OEF(db, email):
     return db[(db['Seeker Email']==email)
