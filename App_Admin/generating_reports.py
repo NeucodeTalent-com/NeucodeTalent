@@ -3396,6 +3396,7 @@ def generate_master_reports(rd, frd, odb_360, assessment_number, logo_path, logo
     """
     # Extract unique candidates
     candidates = rd[['Seeker Name', 'Seeker Email']].drop_duplicates()
+    print(" Iteration Started: @@@@@@@@@@@@>>>>>>> .")
 
     for _, candidate in candidates.iterrows():
         candidate_name = candidate['Seeker Name']
@@ -3404,6 +3405,7 @@ def generate_master_reports(rd, frd, odb_360, assessment_number, logo_path, logo
         # Initialize in-memory buffers for each page
         pdf_buffers = [BytesIO() for _ in range(11)]
 
+        print("Printing Page : >>>>>>> for PDF one by one.")
         # Generate individual pages
         create_first_page(pdf_buffers[0], image_path, logo_path_p, assessment_number, candidate_name)
         create_second_page(pdf_buffers[1], logo_path)

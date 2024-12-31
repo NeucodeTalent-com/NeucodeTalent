@@ -23,7 +23,7 @@ def user1_instructions(request):
     user_data = get_object_or_404(UserDateView, cp_id=cp_id)
 
     # # Check if project_end_date exceeds the current date
-    if user_data.project_end_date and user_data.project_end_date < timezone.now().date():
+    if user_data.project_end_date and user_data.project_end_date <= timezone.now().date():
         # If the project has ended, prevent the page from opening
         return HttpResponse("<h3 style='color:red; text-align:center;'>The Feedback deadline has passed. You cannot access this page.</h3>")
     
