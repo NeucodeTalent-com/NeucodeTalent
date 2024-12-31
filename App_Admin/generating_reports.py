@@ -1911,8 +1911,13 @@ open_question_path = sys.argv[2]
 # full_rating_path = 'D:/Projects/Neucode/Neucode Talent/360 Rating Data_For Testing.pkl'
 # open_question_path = 'D:/Projects/Neucode/Neucode Talent/360 Open Question_For Testing.pkl'
 # Load DataFrames
-full_rating_df = pd.read_pickle(full_rating_path)
-open_question_df = pd.read_pickle(open_question_path)
+# full_rating_df = pd.read_pickle(full_rating_path)
+# open_question_df = pd.read_pickle(open_question_path)
+
+# Load DataFrames
+full_rating_df = pd.read_excel(full_rating_path)
+open_question_df = pd.read_excel(open_question_path)
+
 full_rating_df.rename(columns= {'seeker_name':'Seeker Name','seeker_email': 'Seeker Email', 'relationship':'Relationship'
                                 , 'provider_email': 'Provider Email', 'question_text': 'Statements', 'competency': 'Competency mapped to Statement'
                                 , 'feedback_value': 'Rating'}, inplace = True)

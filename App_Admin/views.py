@@ -864,29 +864,67 @@ def convert_full_rating_to_dataframe(client_name, project_name):
  
     try:
         print(f'convert_full_rating_to_dataframe::::::::>>>>>> going on!!!!!!')
-        # Filter data from FullRatingDataView
-        full_rating_data = FullRatingDataView.objects.filter(
-            client_name=client_name, project_name=project_name
-        ).values(
+
+        # Predefined columns for FullRatingDataView
+        full_rating_columns = [
             'cp_id', 'client_name', 'project_name', 'seeker_name', 'seeker_email',
             'provider_email', 'relationship', 'question_text', 'competency', 'feedback_value'
-        )
- 
-        # Convert FullRatingDataView queryset to DataFrame
-        full_rating_df = pd.DataFrame(full_rating_data)
-        print(f'full_rating_df in function::::::::>>>>>> {full_rating_df}')
- 
-        # Filter data from OpenQuestionView
-        open_question_data = OpenQuestionView.objects.filter(
-            client_name=client_name, project_name=project_name
-        ).values(
+        ]
+
+        # Predefined columns for OpenQuestionView
+        open_question_columns = [
             'cp_id', 'client_name', 'project_name', 'seeker_name', 'seeker_email',
             'provider_email', 'relationship', 'question_text', 'feedback_text'
-        )
- 
-        # Convert OpenQuestionView queryset to DataFrame
+        ]
+
+        # Fetch data from FullRatingDataView
+        full_rating_data = FullRatingDataView.objects.filter(
+            client_name=client_name, project_name=project_name
+        ).values(*full_rating_columns)
+
+        # Convert to DataFrame or create an empty DataFrame with predefined columns
+        full_rating_df = pd.DataFrame(full_rating_data)
+        if full_rating_df.empty:
+            full_rating_df = pd.DataFrame(columns=full_rating_columns)
+
+        print(f'full_rating_df in function::::::::>>>>>> {full_rating_df}')
+
+        # Fetch data from OpenQuestionView
+        open_question_data = OpenQuestionView.objects.filter(
+            client_name=client_name, project_name=project_name
+        ).values(*open_question_columns)
+
+        # Convert to DataFrame or create an empty DataFrame with predefined columns
         open_question_df = pd.DataFrame(open_question_data)
+        if open_question_df.empty:
+            open_question_df = pd.DataFrame(columns=open_question_columns)
+
         print(f'open_question_df in function::::::::>>>>>> {open_question_df}')
+
+
+        # # Filter data from FullRatingDataView
+        # full_rating_data = FullRatingDataView.objects.filter(
+        #     client_name=client_name, project_name=project_name
+        # ).values(
+        #     'cp_id', 'client_name', 'project_name', 'seeker_name', 'seeker_email',
+        #     'provider_email', 'relationship', 'question_text', 'competency', 'feedback_value'
+        # )
+ 
+        # # Convert FullRatingDataView queryset to DataFrame
+        # full_rating_df = pd.DataFrame(full_rating_data)
+        # print(f'full_rating_df in function::::::::>>>>>> {full_rating_df}')
+ 
+        # # Filter data from OpenQuestionView
+        # open_question_data = OpenQuestionView.objects.filter(
+        #     client_name=client_name, project_name=project_name
+        # ).values(
+        #     'cp_id', 'client_name', 'project_name', 'seeker_name', 'seeker_email',
+        #     'provider_email', 'relationship', 'question_text', 'feedback_text'
+        # )
+ 
+        # # Convert OpenQuestionView queryset to DataFrame
+        # open_question_df = pd.DataFrame(open_question_data)
+        # print(f'open_question_df in function::::::::>>>>>> {open_question_df}')
         # Return the DataFrames
         return full_rating_df, open_question_df
  
@@ -934,21 +972,24 @@ def run_generate_reports(request):
         temp_dir = os.path.join(os.path.dirname(__file__), 'temp')
         os.makedirs(temp_dir, exist_ok=True)
         
-        full_rating_path = os.path.join(temp_dir, 'full_rating_df.pkl')
-        open_question_path = os.path.join(temp_dir, 'open_question_df.pkl')
+        # full_rating_path = os.path.join(temp_dir, 'full_rating_df.pkl')
+        # open_question_path = os.path.join(temp_dir, 'open_question_df.pkl')
 
-        full_rating_df.to_pickle(full_rating_path)
-        open_question_df.to_pickle(open_question_path)
+        # full_rating_df.to_pickle(full_rating_path)
+        # open_question_df.to_pickle(open_question_path)
 
-        # full_rating_path = os.path.join(temp_dir, 'full_rating_df.xlsx')
-        # open_question_path = os.path.join(temp_dir, 'open_question_df.xlsx')
+        full_rating_path = os.path.join(temp_dir, 'full_rating_df.xlsx')
+        open_question_path = os.path.join(temp_dir, 'open_question_df.xlsx')
 
-        # # Save the DataFrames as Excel files
-        # full_rating_df.to_excel(full_rating_path, index=False)
-        # open_question_df.to_excel(open_question_path, index=False)
+        # Save the DataFrames as Excel files
+        full_rating_df.to_excel(full_rating_path, index=False, header=True)
+        open_question_df.to_excel(open_question_path, index=False, header=True)
+
+        print(f"File Created: full_rating_path={full_rating_path}, open_question_path={open_question_path}")
 
         # Path to your script
         script_path = os.path.join(os.path.dirname(__file__), 'generating_reports.py')
+        print(f"Access Script_path!!!!!!!!!!!! {script_path}")
 
         # Execute the script and pass file paths as arguments
         subprocess.run([
@@ -962,6 +1003,15 @@ def run_generate_reports(request):
         # Add an error message in case of failure
         messages.error(request, f"Error generating reports: {e}")
 
+    # finally:
+    #     # Clean up temporary files if needed
+    #     if os.path.exists(temp_dir):
+    #         try:
+    #             shutil.rmtree(temp_dir)
+    #             print(f"Temporary directory cleaned: {temp_dir}")
+    #         except Exception as cleanup_error:
+    #             print(f"Error cleaning temporary directory: {cleanup_error}")
+    
     return redirect('admin2_generate_reports')
 
 
