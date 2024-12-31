@@ -1884,6 +1884,7 @@ from PIL import Image as PILImage
 # Azure Storage (Optional)
 from azure.storage.blob import BlobServiceClient
 from azure.identity import DefaultAzureCredential
+from azure.identity import ClientSecretCredential
 
 # Django (Optional)
 from django.http import JsonResponse
@@ -1896,7 +1897,12 @@ AZURE_CONTAINER_NAME = 'neucode-container'      # Replace with your container na
 AZURE_STORAGE_ACCOUNT_URL = f"https://{AZURE_STORAGE_ACCOUNT_NAME}.blob.core.windows.net"
  
 # Azure Blob Service Client Initialization
-credential = DefaultAzureCredential()
+#credential = DefaultAzureCredential()
+credential = ClientSecretCredential(
+    tenant_id="b2aa0d4b-c7bf-49f4-9539-6ff110ea720d",
+    client_id="4c676a8b-1afa-471f-b199-d643ba8e6fa4",
+    client_secret="VsC8Q~kiRAD4iFnPHzffrpkhYIe32n_8SPlhyajV"
+)
 blob_service_client = BlobServiceClient(account_url=AZURE_STORAGE_ACCOUNT_URL, credential=credential)
 
 full_rating_path = sys.argv[1]
@@ -3416,7 +3422,9 @@ def generate_master_reports(rd, frd, odb_360, assessment_number, logo_path, logo
         merger.close()
 
         # Generate the blob name with the naming convention
-        blob_name = f"reports/{candidate_name.replace(' ', '_')}_Assessment_{assessment_number}_Report.pdf"
+        blob_name = f"reports/{candidate_name.replace(' ', '_').lower()}_assessment_{assessment_number}_report.pdf"
+        blob_name = blob_name.lower()
+        print("Report generated succsfully : >>>>>>> Going for Upload PDF.")
 
         # Upload the merged PDF to Azure Data Lake Storage
         upload_pdf_to_adls(final_pdf_buffer, blob_name)
