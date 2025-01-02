@@ -436,3 +436,17 @@ class FeedbackUI(models.Model):
         #managed = False
         db_table = 'feedback_ui'
         # unique_together = (('cp', 'seeker_id', 'provider_id', 'question_id'),)
+
+class AssessmentNumberView(models.Model):
+    cp_id = models.IntegerField(primary_key=True, db_column='ClientID')
+    client_name = models.CharField(max_length=255, db_column='ClientName')
+    project_name = models.CharField(max_length=255, db_column='ProjectName')
+    assessment_type = models.CharField(max_length=255, db_column='AssessmentType')
+
+    class Meta:
+        managed = False  # Since this is a database view
+        db_table = 'assessment_number_view'  # Matches the name of the view in the database
+
+    def __str__(self):
+        return f"{self.client_name} - {self.project_name} ({self.assessment_type})"
+

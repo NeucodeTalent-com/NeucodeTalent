@@ -13,7 +13,7 @@ from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from django.core.mail import send_mail
 from django.conf import settings
-from .models import ClientProject, Seeker, Provider, SuperUser, RelationshipView, CliPr, ProviderURL, SuperUserURL, OptimumMinimumCriteriaView, FullRatingDataView, OpenQuestionView
+from .models import ClientProject, Seeker, Provider, SuperUser, RelationshipView, CliPr, ProviderURL, SuperUserURL, OptimumMinimumCriteriaView, FullRatingDataView, OpenQuestionView, AssessmentNumberView
 from .utils import generate_unique_url
 from django.db.models import Q
 
@@ -877,6 +877,8 @@ def convert_full_rating_to_dataframe(client_name, project_name):
             'provider_email', 'relationship', 'question_text', 'feedback_text'
         ]
 
+        assessment_number_view = ['cp_id', 'client_name', 'project_name', 'assessment_type']
+
         # Fetch data from FullRatingDataView
         full_rating_data = FullRatingDataView.objects.filter(
             client_name=client_name, project_name=project_name
@@ -900,6 +902,18 @@ def convert_full_rating_to_dataframe(client_name, project_name):
             open_question_df = pd.DataFrame(columns=open_question_columns)
 
         print(f'open_question_df in function::::::::>>>>>> {open_question_df}')
+
+        # Fetch data from AssessmentNumberView
+        assessment_number_data = AssessmentNumberView.objects.filter(
+            client_name=client_name, project_name=project_name
+        ).values(*assessment_number_view)
+
+        # Convert to DataFrame or create an empty DataFrame with predefined columns
+        p_assessment_number_df = pd.DataFrame(assessment_number_data)
+        if p_assessment_number_df.empty:
+            p_assessment_number_df = pd.DataFrame(columns=assessment_number_view)
+
+        print(f'assessment_number_df in function::::::::>>>>>> {p_assessment_number_df}')
 
 
         # # Filter data from FullRatingDataView
@@ -926,7 +940,7 @@ def convert_full_rating_to_dataframe(client_name, project_name):
         # open_question_df = pd.DataFrame(open_question_data)
         # print(f'open_question_df in function::::::::>>>>>> {open_question_df}')
         # Return the DataFrames
-        return full_rating_df, open_question_df
+        return full_rating_df, open_question_df, p_assessment_number_df
  
     except Exception as e:
         raise RuntimeError(f"An error occurred: {str(e)}")
@@ -965,9 +979,10 @@ def run_generate_reports(request):
 
     try:
         # Fetch and process the data as needed
-        full_rating_df, open_question_df = convert_full_rating_to_dataframe(client_name, project_name)
+        full_rating_df, open_question_df, p_assessment_number_df = convert_full_rating_to_dataframe(client_name, project_name)
         print(f'full_rating_df:: {full_rating_df}')
         print(f'open_question_df:: {open_question_df}')
+        print(f'assessment_number_df:: {p_assessment_number_df}')
         # Save DataFrames to temporary files
         temp_dir = os.path.join(os.path.dirname(__file__), 'temp')
         os.makedirs(temp_dir, exist_ok=True)
@@ -980,12 +995,14 @@ def run_generate_reports(request):
 
         full_rating_path = os.path.join(temp_dir, 'full_rating_df.xlsx')
         open_question_path = os.path.join(temp_dir, 'open_question_df.xlsx')
+        p_assessment_number_path = os.path.join(temp_dir, 'p_assessment_number_df.xlsx')
 
         # Save the DataFrames as Excel files
         full_rating_df.to_excel(full_rating_path, index=False, header=True)
         open_question_df.to_excel(open_question_path, index=False, header=True)
+        p_assessment_number_df.to_excel(p_assessment_number_path, index=False, header=True)
 
-        print(f"File Created: full_rating_path={full_rating_path}, open_question_path={open_question_path}")
+        print(f"File Created: full_rating_path={full_rating_path}, open_question_path={open_question_path}, p_assessment_number_path={p_assessment_number_path}")
 
         # Path to your script
         script_path = os.path.join(os.path.dirname(__file__), 'generating_reports.py')
@@ -993,7 +1010,7 @@ def run_generate_reports(request):
 
         # Execute the script and pass file paths as arguments
         subprocess.run([
-            'python', script_path, full_rating_path, open_question_path
+            'python', script_path, full_rating_path, open_question_path, p_assessment_number_path
         ], check=True)
 
         # Add a success message
@@ -1011,7 +1028,7 @@ def run_generate_reports(request):
     #             print(f"Temporary directory cleaned: {temp_dir}")
     #         except Exception as cleanup_error:
     #             print(f"Error cleaning temporary directory: {cleanup_error}")
-    
+
     return redirect('admin2_generate_reports')
 
 
