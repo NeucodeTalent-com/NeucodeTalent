@@ -129,46 +129,127 @@ def user2_provider(request):
 #     )
 #     return JsonResponse({'client_projects': list(seekers)})
 
+# def user3_seeking(request):
+#     unique_id = request.GET.get('id')
+#     email = request.GET.get('email')
+#     cp_id = request.GET.get('cp_id')
+#     provider_id = request.GET.get('provider_id')
+#     print(f'provider_id: >>>>>>>: {provider_id}')
+#     seeker_id = request.GET.get('seeker_id')
+#     print(f'seeker_id: >>>>>>>: {seeker_id}')
+
+#     # Check if seeker_id is provided
+#     if seeker_id==None:
+#         print("No seeker_id provided.")
+#         return render(request, 'user_no_data.html', {
+#             'message': 'Seeker ID is missing. Please provide a valid Seeker ID.',
+#         })
+#     # Optional: Validate query parameters
+#     # if not unique_id or not email or not cp_id or not provider_id:
+#     #     return render(request, 'error_page.html', {'message': 'Missing or invalid parameters.'})
+#     # Optional: Fetch provider details
+#     # provider = get_object_or_404(UserProviderView, cp_id=cp_id, provider_id=provider_id)
+#     providers = UserProviderView.objects.filter(cp_id=cp_id, seeker_id= seeker_id)
+
+#     #if not seeker_id.exists():
+#         # If the project has ended, prevent the page from opening
+#         # return HttpResponse("<h3 style='color:black; text-align:center;'>The Feedback page dont have any Data. You cannot access this page.</h3>")
+#         # context = {
+#         # 'unique_id': unique_id,
+#         # 'email': email,
+#         # 'cp_id': cp_id,
+#         # 'provider_id': provider_id,
+#         # 'seeker_id': seeker_id,
+#         # }
+#         # return render(request, 'user3_seeking.html', context)
+
+#     # provider_seeker = UniqueSeekerProviderView.objects.filter(cp_id=cp_id, provider_id=provider_id).values_list('seeker_id', flat=True)
+#     # print(provider_seeker)
+
+#     # Check if providers are found
+#     if not providers.exists():
+#         print("No data found for the given seeker_id.")
+#         return render(request, 'user_no_data.html', {
+#             'message': 'No data available for the provided Seeker ID. Please try again.',
+#         })
+
+#     context = {
+#         'unique_id': unique_id,
+#         'email': email,
+#         'cp_id': cp_id,
+#         'provider_id': provider_id,
+#         'providers': providers,
+#     }
+#     print(f"Context Data User3: {context}")
+#     return render(request, 'user3_seeking.html', context)
+
+
+
+
 def user3_seeking(request):
     unique_id = request.GET.get('id')
     email = request.GET.get('email')
     cp_id = request.GET.get('cp_id')
     provider_id = request.GET.get('provider_id')
-    print(f'provider_id: >>>>>>>: {provider_id}')
     seeker_id = request.GET.get('seeker_id')
+
+    
+    print(f'provider_id: >>>>>>>: {provider_id}')
     print(f'seeker_id: >>>>>>>: {seeker_id}')
+    # Check if seeker_id is provided
+    if seeker_id in [None, "None", ""]:
+        print(f'Inside seeker_id None !!!!!!>>>>>>>')
+        context = {
+            'unique_id': unique_id,
+            'email': email,
+            'cp_id': cp_id,
+            'provider_id': provider_id,
+            
+        }
+        
+        return render(request, 'user_no_data.html', context)
 
-    # Optional: Validate query parameters
-    # if not unique_id or not email or not cp_id or not provider_id:
-    #     return render(request, 'error_page.html', {'message': 'Missing or invalid parameters.'})
-    # Optional: Fetch provider details
-    # provider = get_object_or_404(UserProviderView, cp_id=cp_id, provider_id=provider_id)
-    providers = UserProviderView.objects.filter(cp_id=cp_id, seeker_id= seeker_id)
+    try:
+        # Fetch providers
+        providers = UserProviderView.objects.filter(cp_id=cp_id, seeker_id=seeker_id)
 
-    #if not providers.exists():
-        # If the project has ended, prevent the page from opening
-        # return HttpResponse("<h3 style='color:black; text-align:center;'>The Feedback page dont have any Data. You cannot access this page.</h3>")
-        # context = {
-        # 'unique_id': unique_id,
-        # 'email': email,
-        # 'cp_id': cp_id,
-        # 'provider_id': provider_id,
-        # 'seeker_id': seeker_id,
-        # }
-        # return render(request, 'user3_seeking.html', context)
+        if not providers.exists():
+            print(f'Inside not providers !!!!!!!>>>>>>>')
+            context = {
+            'unique_id': unique_id,
+            'email': email,
+            'cp_id': cp_id,
+            'provider_id': provider_id,
+            
+            }
+           
+            return render(request, 'user_no_data.html', context)
 
-    # provider_seeker = UniqueSeekerProviderView.objects.filter(cp_id=cp_id, provider_id=provider_id).values_list('seeker_id', flat=True)
-    # print(provider_seeker)
+        context = {
+            'unique_id': unique_id,
+            'email': email,
+            'cp_id': cp_id,
+            'provider_id': provider_id,
+            'providers': providers,
+        }
+        
+        return render(request, 'user3_seeking.html', context)
 
-    context = {
-        'unique_id': unique_id,
-        'email': email,
-        'cp_id': cp_id,
-        'provider_id': provider_id,
-        'providers': providers,
-    }
-    print(f"Context Data User3: {context}")
-    return render(request, 'user3_seeking.html', context)
+    except Exception as e:
+        print(f'Inside Exception !!!!!!!>>>>>>>')
+        context = {
+            'unique_id': unique_id,
+            'email': email,
+            'cp_id': cp_id,
+            'provider_id': provider_id,
+            
+        }
+
+        return render(request, 'user_no_data.html', context)
+
+
+
+
 
 def user4_mcq_questions(request):
     unique_id = request.GET.get('id')
@@ -262,7 +343,7 @@ def user4_mcq_questions(request):
 
             # Set a success message and redirect
             if feedback_status == 'complete':
-                messages.success(request, 'Your answers have been submitted successfully.')
+                messages.success(request, 'Your answers have been saved successfully. Please fill the following answers.')
             # Redirect with query parameters
             redirect_url = f"{reverse('user5_written_questions')}?id={unique_id}&email={email}&cp_id={cp_id}&provider_id={provider_id}&seeker_id={seeker_id}"
             return HttpResponseRedirect(redirect_url)

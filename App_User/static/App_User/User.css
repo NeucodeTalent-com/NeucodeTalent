@@ -17,6 +17,18 @@ h3 {
     color: #333;
 }
 
+h4 {
+    font-size: 1.5rem;           /* Adjusts the font size */
+    font-weight: bold;           /* Makes the text bold */
+    color: #333333;              /* Dark grey color for text */
+    margin-top: 5px;            /* Adds space at the top */
+    margin-bottom: 10px;         /* Adds space at the bottom */
+    text-align: center;          /* Centers the text */
+    line-height: 1.4;            /* Adjusts the line height */
+    letter-spacing: 1px;         /* Adjusts the letter spacing */
+}
+
+
 .logo {
     position: absolute;
     top: 20px;
