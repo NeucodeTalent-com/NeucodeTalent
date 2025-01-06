@@ -13,7 +13,7 @@ from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from django.core.mail import send_mail
 from django.conf import settings
-from .models import ClientProject, Seeker, Provider, SuperUser, RelationshipView, CliPr, ProviderURL, SuperUserURL, OptimumMinimumCriteriaView, FullRatingDataView, OpenQuestionView, AssessmentNumberView
+from .models import ClientProject, Seeker, Provider, SuperUser, RelationshipView, CliPr, ProviderURL, SuperUserURL, OptimumMinimumCriteriaView, FullRatingDataView, OpenQuestionView, AssessmentNumberView, ProviderRelationshipView, SeekerURL
 from .utils import generate_unique_url
 from django.db.models import Q
 
@@ -217,10 +217,10 @@ def fetch_emails(request):
     print(f"Filtered ClientProjects: {client_projects}")
 
     # Fetch relationships excluding those with relationship='self' (case-insensitive)
-    valid_relationships = RelationshipView.objects.filter(cp__in=client_projects).exclude(relationship__iexact='self')
-
+    valid_relationships = ProviderRelationshipView.objects.filter(cp__in=client_projects).exclude(relationship__iexact='self')
+    valid_relationships_self = RelationshipView.objects.filter(cp__in=client_projects, relationship__iexact='self')
     # Extract related seeker and provider IDs
-    valid_seeker_ids = valid_relationships.values_list('seeker_id', flat=True)
+    valid_seeker_ids = valid_relationships_self.values_list('seeker_id', flat=True)
     valid_provider_ids = valid_relationships.values_list('provider_id', flat=True)
 
     # Initialize querysets for seekers and providers, excluding relationships with 'self'
@@ -327,7 +327,7 @@ def insert_link(request):
         project_name = request.GET.get('project_name', '').strip()
         email_type = request.GET.get('email_type', '').strip()
         insert_link = request.GET.get('insert_link', 'false').lower() == 'true'
-
+        print(f"Insert_link Email Type:::::>>>>> {email_type}")
         # Fetch client projects
         client_projects = ClientProject.objects.filter(
             client_name__icontains=client_name,
@@ -339,6 +339,13 @@ def insert_link(request):
 
         if not insert_link:
             return JsonResponse({'message': 'Insert link is not checked. No URLs generated.'})
+        
+        # # Fetch relationships excluding those with relationship='self' (case-insensitive)
+        # valid_relationships = ProviderRelationshipView.objects.filter(cp__in=client_projects).exclude(relationship__iexact='self')
+        # valid_relationships_self = RelationshipView.objects.filter(cp__in=client_projects, relationship__iexact='self')
+        # # Extract related seeker and provider IDs
+        # valid_seeker_ids = valid_relationships_self.values_list('seeker_id', flat=True)
+        # valid_provider_ids = valid_relationships.values_list('provider_id', flat=True)
 
         generated_links = []
 
@@ -396,6 +403,39 @@ def insert_link(request):
                         )
                         generated_links.append({
                             'email': superuser.super_user_email,
+                            'url': unique_url,
+                            'unique_id': str(unique_id)
+                        })
+
+        # Process providers
+        if email_type == "seeker" and insert_link:
+            for cp in client_projects:
+                seekers = Seeker.objects.filter(cp=cp)
+                
+                for seeker in seekers:
+                    # Check for duplicates
+                    print("checking Seeker URL!!")
+                    existing_url = SeekerURL.objects.filter(cp=cp, seeker_email=seeker.seeker_email).first()
+                    if not existing_url:
+                        #for provider in providers:
+                        seeker_provider_id = RelationshipView.objects.filter(cp__in=client_projects, seeker_id = seeker.seeker_id, relationship__iexact='self').first()
+                        provider = Provider.objects.filter(cp__in=client_projects, provider_id = seeker_provider_id.provider_id).first()
+                        unique_url, unique_id = generate_unique_url(
+                            request, provider.provider_email, "seeker", cp.cp_id, provider.provider_id
+                        )
+                        print("Generate link successfully Now going to insert link!!")
+                        SeekerURL.objects.create(
+                            cp=cp,
+                            client_name=cp.client_name,
+                            project_name=cp.project_name,
+                            seeker_id=seeker.seeker_id,
+                            seeker_name=f"{seeker.seeker_first_name} {seeker.seeker_last_name}",
+                            seeker_email=seeker.seeker_email,
+                            seeker_url=unique_url,
+                            unique_id=unique_id
+                        )
+                        generated_links.append({
+                            'email': seeker.seeker_email,
                             'url': unique_url,
                             'unique_id': str(unique_id)
                         })
@@ -577,8 +617,23 @@ def compose_email(request):
                             print(f"Email for {email}: Replaced with Superuser URL -> {superuser_url.super_url},     link_in_body ->   {supe_link}")
                         else:
                             print(f"No URL found for {email}, keeping placeholder.")
+
+
+                    elif email_type == "seeker":
+                        seeker_url = SeekerURL.objects.filter(seeker_email=email).first()
+                        print(f"Seeker URL: {seeker_url}")
+                        if seeker_url:
+                            seeker_link = seeker_url.seeker_url
+                            #seeker_link = extract_text_from_html(seeker_link)
+                            email_body_plain = email_body_plain.replace('>>>>>', f'<a href="{seeker_link}">{seeker_link}</a>')
+                            print(f"Email for {email}: Replaced with Seeker URL -> {seeker_url.seeker_url},     link_in_body ->   {seeker_link}")
+                        else:
+                            print(f"No URL found for {email}, keeping placeholder.")
+                    
+                    
                     else:
                         print(f"Invalid email type '{email_type}' for {email}")
+
 
                 print(f"Final Email Body for {email}: {email_body_plain}")
                 

@@ -141,10 +141,21 @@ def user3_seeking(request):
     # Optional: Validate query parameters
     # if not unique_id or not email or not cp_id or not provider_id:
     #     return render(request, 'error_page.html', {'message': 'Missing or invalid parameters.'})
-
     # Optional: Fetch provider details
     # provider = get_object_or_404(UserProviderView, cp_id=cp_id, provider_id=provider_id)
     providers = UserProviderView.objects.filter(cp_id=cp_id, seeker_id= seeker_id)
+
+    #if not providers.exists():
+        # If the project has ended, prevent the page from opening
+        # return HttpResponse("<h3 style='color:black; text-align:center;'>The Feedback page dont have any Data. You cannot access this page.</h3>")
+        # context = {
+        # 'unique_id': unique_id,
+        # 'email': email,
+        # 'cp_id': cp_id,
+        # 'provider_id': provider_id,
+        # 'seeker_id': seeker_id,
+        # }
+        # return render(request, 'user3_seeking.html', context)
 
     # provider_seeker = UniqueSeekerProviderView.objects.filter(cp_id=cp_id, provider_id=provider_id).values_list('seeker_id', flat=True)
     # print(provider_seeker)

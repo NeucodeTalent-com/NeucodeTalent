@@ -168,7 +168,7 @@ def generate_unique_url(request: HttpRequest, email: str, role: str, cp_id: int,
     elif role == "superuser":
         query_params = {
             "id": unique_id,
-            "email": email,
+            "email": email_cleaned,
             "cp_id": cp_id
         }
         encoded_query = urlencode(query_params)
@@ -176,6 +176,20 @@ def generate_unique_url(request: HttpRequest, email: str, role: str, cp_id: int,
         superuser_url = f"{base_url}/superuser1_dashboard/?{encoded_query}"
         # Clean the generated URL
         return extract_text_from_html(superuser_url), unique_id
+    
+
+    elif role == "seeker":
+        query_params = {
+            "id": unique_id,
+            "email": email_cleaned,
+            "cp_id": cp_id,
+            "provider_id": provider_id
+        }
+        encoded_query = urlencode(query_params)
+        #return f"{base_url}/user1_instructions/?{encoded_query}", unique_id
+        provider_url = f"{base_url}/user1_instructions/?{encoded_query}"
+        # Clean the generated URL
+        return extract_text_from_html(provider_url), unique_id
 
     return None, unique_id
 

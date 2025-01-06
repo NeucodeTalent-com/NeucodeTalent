@@ -437,6 +437,7 @@ class FeedbackUI(models.Model):
         db_table = 'feedback_ui'
         # unique_together = (('cp', 'seeker_id', 'provider_id', 'question_id'),)
 
+# View_10:
 class AssessmentNumberView(models.Model):
     cp_id = models.IntegerField(primary_key=True, db_column='ClientID')
     client_name = models.CharField(max_length=255, db_column='ClientName')
@@ -450,3 +451,37 @@ class AssessmentNumberView(models.Model):
     def __str__(self):
         return f"{self.client_name} - {self.project_name} ({self.assessment_type})"
 
+# View_11:
+
+class ProviderRelationshipView(models.Model):
+    seeker_id = models.IntegerField(db_column='SeekerID', primary_key=True)  # Match the column name and type
+    provider_id = models.IntegerField(db_column='ProviderID')  # Match the column name and type
+    cp = models.IntegerField(db_column='ClientID')  # Match the column name and type
+    relationship = models.CharField(max_length=50, db_column='Relationship')  # Match the column name and type
+
+    class Meta:
+        managed = False  # Django won't manage the view
+        db_table = 'provider_relationship_view'  # Name of the database view
+        unique_together = (('cp','seeker_id', 'provider_id'),)
+    def __str__(self):
+         return f"Relationship between {self.seeker_id} and {self.provider_id}: {self.relationship}"
+    
+
+# Table_10: Seeker URL View
+class SeekerURL(models.Model):
+    cp = models.ForeignKey(ClientProject, on_delete=models.CASCADE, db_column="ClientID")
+    client_name = models.CharField(max_length=255, db_column="ClientName")
+    project_name = models.CharField(max_length=255, db_column="ProjectName")
+    seeker_id = models.IntegerField( db_column="SeekerID")
+    seeker_name = models.CharField(max_length=255, db_column="SeekerName")
+    seeker_email = models.EmailField( db_column="SeekerEmail")
+    seeker_url = models.URLField(db_column="SeekerURL")  # Unique URL for the provider
+    unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True, db_column="UniqueID")  # Store unique ID for validation
+
+    class Meta:
+        
+        db_table = 'seeker_url'  # Ensure this points to a valid table in your database
+        #unique_together = (('cp','unique_id'),)
+
+    def __str__(self):
+        return f"{self.seeker_name} ({self.seeker_email})"
