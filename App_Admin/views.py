@@ -220,9 +220,9 @@ def fetch_emails(request):
     valid_relationships = ProviderRelationshipView.objects.filter(cp__in=client_projects).exclude(relationship__iexact='self')
     valid_relationships_self = RelationshipView.objects.filter(cp__in=client_projects, relationship__iexact='self')
     # Extract related seeker and provider IDs
-    valid_seeker_ids = valid_relationships_self.values_list('seeker_id', flat=True)
+    
     valid_provider_ids = valid_relationships.values_list('provider_id', flat=True)
-
+    valid_seeker_ids = valid_relationships_self.values_list('seeker_id', flat=True)
     # Initialize querysets for seekers and providers, excluding relationships with 'self'
     seekers = Seeker.objects.filter(pk__in=valid_seeker_ids)
     providers = Provider.objects.filter(pk__in=valid_provider_ids)

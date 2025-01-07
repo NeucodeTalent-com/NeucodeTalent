@@ -248,9 +248,6 @@ def user3_seeking(request):
         return render(request, 'user_no_data.html', context)
 
 
-
-
-
 def user4_mcq_questions(request):
     unique_id = request.GET.get('id')
     email = request.GET.get('email')
