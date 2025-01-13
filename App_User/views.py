@@ -29,10 +29,12 @@ def user1_instructions(request):
     
     # Extract evolve_title and deadline
     evolve_title = user_data.client_name
+    evolve_project = user_data.project_name
     deadline = user_data.project_end_date.strftime('%d-%m-%Y')  # Format the date as required
 
     context = {
         'evolve_title': evolve_title,
+        'evolve_project': evolve_project,
         'deadline': deadline,
         'cp_id': cp_id,
         'email': email,
@@ -267,7 +269,7 @@ def user4_mcq_questions(request):
         if 'save_as_draft' in request.POST:
             feedback_status = 'draft'
         elif 'continue' in request.POST:
-            feedback_status = 'complete'
+            feedback_status = 'continue'
         else:
             feedback_status = None
 
@@ -309,7 +311,7 @@ def user4_mcq_questions(request):
             redirect_url = f"{reverse('user4_mcq_questions')}?id={unique_id}&email={email}&cp_id={cp_id}&provider_id={provider_id}&seeker_id={seeker_id}"
             return HttpResponseRedirect(redirect_url)
     
-        if feedback_status == 'complete':
+        if feedback_status == 'continue':
             for question in mcq_questions:
                 question_id = question.question_id
                 feedback_value = request.POST.get(f'rating_{question_id}')
@@ -339,7 +341,7 @@ def user4_mcq_questions(request):
                         print(f"Error saving feedback for question {question_id}: {str(e)}")
 
             # Set a success message and redirect
-            if feedback_status == 'complete':
+            if feedback_status == 'continue':
                 messages.success(request, 'Your answers have been saved successfully. Please fill the following answers.')
             # Redirect with query parameters
             redirect_url = f"{reverse('user5_written_questions')}?id={unique_id}&email={email}&cp_id={cp_id}&provider_id={provider_id}&seeker_id={seeker_id}"

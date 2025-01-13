@@ -9,14 +9,23 @@ body {
 h1 {
     text-align: center;
     color: #8d34db;
-    margin-bottom: 20px;
-    margin-top: 40px;
+    margin: 40px 0 20px;
 }
 
-h3 {
+h3, h4 {
     color: #333;
 }
 
+h4 {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin: 5px 0 10px;
+    text-align: center;
+    line-height: 1.4;
+    letter-spacing: 1px;
+}
+
+/* Logo Styling */
 .logo {
     position: absolute;
     top: 20px;
@@ -24,9 +33,10 @@ h3 {
 }
 
 .logo img {
-    width: 200px; /* Adjust the size as needed */
+    width: 200px;
     height: auto;
 }
+
 /* Select Dropdown Styling */
 select {
     padding: 10px;
@@ -42,8 +52,7 @@ select:focus {
 
 /* Message Alerts */
 .alert-messages {
-    margin-bottom: 20px;
-    margin-top: 20px;
+    margin: 30px 0 20px;
 }
 
 .alert {
@@ -66,31 +75,27 @@ select:focus {
 
 /* Button Styling with 3D Effect */
 button, .btn {
-    padding: 8px 16px;            /* Reduced padding for a smaller button size */
-    font-size: 16px;              /* Smaller font size */
+    padding: 8px 16px;
+    font-size: 16px;
     border: none;
     border-radius: 4px;
     background-color: #8d34db;
     color: white;
     cursor: pointer;
-    box-shadow: 0px 3px 8px rgba(0, 0, 0, 0.2); /* Slightly smaller shadow */
+    box-shadow: 0px 3px 8px rgba(0, 0, 0, 0.2);
     transition: background-color 0.3s ease;
-    text-decoration: none;        /* Removes underline from link-based buttons */
+    text-decoration: none;
 }
 
-
-form button:hover {
+button:hover, .btn:hover {
     background-color: #702fa8;
 }
 
-/* Active/Pressed Effect for 3D Button */
 button:active, .btn:active {
     background-color: #702fa8;
     box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
-    
 }
 
-/* Disabled Button for "Completed" Status */
 .btn[disabled], .btn:disabled {
     background-color: #a5a5a5;
     cursor: not-allowed;
@@ -107,10 +112,10 @@ button:active, .btn:active {
     color: white;
 }
 
-.bg-success { background-color: #28a745; }      /* Green for 'Open' */
-.bg-warning { background-color: #ffc107; }      /* Yellow for 'In-Progress' */
-.bg-primary { background-color: #007bff; }      /* Blue for 'Completed' */
-.bg-secondary { background-color: #6c757d; }    /* Grey for any other state */
+.bg-success { background-color: #28a745; }
+.bg-warning { background-color: #ffc107; }
+.bg-primary { background-color: #007bff; }
+.bg-secondary { background-color: #6c757d; }
 
 /* Centering the Button in its Container */
 .center-button {
@@ -118,7 +123,7 @@ button:active, .btn:active {
     margin-top: 30px;
 }
 
-/* Centering Buttons with Updated Sizing */
+/* Flex-based Action Buttons */
 .action-buttons {
     display: flex;
     justify-content: center;
@@ -128,10 +133,8 @@ button:active, .btn:active {
 
 /* Center Buttons Separately */
 .text-center {
-    margin-top: 40px;
+    margin: 30px 0;
 }
-
-
 
 /* Form Styling */
 form {
@@ -152,11 +155,15 @@ table th, table td {
     text-align: left;
 }
 
-table th {
-    background-color: #8d34db;
-    color: white;
+/* Table Header Styling */
+table.responsive-table th {
+    background-color: #8d34db; /* Set header background color */
+    color: white;              /* Ensure text is white for contrast */
+    font-weight: bold;         /* Make the header text bold */
+    padding: 12px 16px; 
 }
 
+/* Table Row Styling */
 table tr:nth-child(even) {
     background-color: #f2f2f2;
 }
@@ -167,6 +174,14 @@ table tr:hover {
 
 table tr:focus {
     outline: 2px solid #8d34db;
+}
+
+/* Table Column Widths */
+table.responsive-table th:nth-child(1),
+table.responsive-table td:nth-child(1),
+table.responsive-table th:nth-child(2),
+table.responsive-table td:nth-child(2) {
+    width: 65%;
 }
 
 /* File Upload Styling */
@@ -261,4 +276,15 @@ textarea:focus {
         flex-direction: column;
         gap: 5px;
     }
+}
+
+/* Inline Rating Styling */
+.inline-rating {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.rating-label {
+    font-size: 16px;
 }

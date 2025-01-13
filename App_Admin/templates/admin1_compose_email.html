@@ -468,7 +468,7 @@
 
                     const data = await fetchUniqueLinks(emailType, clientName, projectName);
                     console.log("Generated Links:", data.message);
-                    alert("Unique URLs have been generated and will be inserted after '>>>>>' in the email body.");
+                    alert("Unique URLs have been generated and will be inserted after '>>>>' in the email body.");
                 } catch (error) {
                     console.error("Error generating unique links:", error);
                     alert("An error occurred while generating unique links.");
@@ -489,7 +489,7 @@
         //     const emailType = getSelectedEmailType();
         //     const editorContent = editor.getContent();
 
-        //     if (insertLinkCheckbox.checked && editorContent.includes('>>>>>')) {
+        //     if (insertLinkCheckbox.checked && editorContent.includes('>>>>')) {
         //         try {
         //             const clientName = clientDropdown?.value;
         //             const projectName = projectDropdown?.value;
@@ -497,11 +497,11 @@
 
         //             if (emailType === 'provider' && data.generated_links?.length) {
         //                 const link = data.generated_links[0]?.url || 'No link available';
-        //                 const updatedContent = editorContent.replace('>>>>>', link);
+        //                 const updatedContent = editorContent.replace('>>>>', link);
         //                 editor.setContent(updatedContent);
         //             } else if (emailType === 'superuser' && data.generated_links?.length) {
         //                 const link = data.generated_links[0]?.url || 'No link available';
-        //                 const updatedContent = editorContent.replace('>>>>>', link);
+        //                 const updatedContent = editorContent.replace('>>>>', link);
         //                 editor.setContent(updatedContent);
         //             }
         //         } catch (error) {
@@ -819,14 +819,6 @@
             </table>
         </div>
 
-
-        {% if messages %}
-            <div class="alert-messages">
-                {% for message in messages %}
-                    <div class="alert alert-{{ message.tags }}">{{ message }}</div>
-                {% endfor %}
-            </div>
-        {% endif %}
 
 
 

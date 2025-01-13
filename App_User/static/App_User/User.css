@@ -55,7 +55,7 @@ select:focus {
 /* Message Alerts */
 .alert-messages {
     margin-bottom: 20px;
-    margin-top: 20px;
+    margin-top: 30px;
 }
 
 .alert {
@@ -140,9 +140,9 @@ button:active, .btn:active {
 
 /* Center Buttons Separately */
 .text-center {
-    margin-top: 40px;
+    margin-top: 30px;
+    margin-bottom: 30px;
 }
-
 
 
 /* Form Styling */
@@ -180,6 +180,42 @@ table tr:hover {
 table tr:focus {
     outline: 2px solid #8d34db;
 }
+
+/* Table Column Widths */
+table.responsive-table th:nth-child(1),
+table.responsive-table td:nth-child(1),
+table.responsive-table th:nth-child(2),
+table.responsive-table td:nth-child(2) {
+    width: 50%;
+}
+
+table.responsive-table th,
+table.responsive-table td {
+    padding: 12px;
+    text-align: left;
+    
+}
+
+.inline-rating {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.rating-label {
+    font-size: 16px;
+}
+
+/* Optional: Add some basic styles for clarity */
+table.responsive-table th {
+    background-color: #8d34db;
+    font-weight: bold;
+}
+
+table.responsive-table td {
+    border-bottom: 1px solid #ddd;
+}
+
 
 /* File Upload Styling */
 .file-upload {
@@ -274,3 +310,4 @@ textarea:focus {
         gap: 5px;
     }
 }
+
