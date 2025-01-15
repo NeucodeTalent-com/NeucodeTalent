@@ -761,15 +761,6 @@
         </div>
 
         <h1>NeuCode Admin | Email Trigger</h1>
-
-        {% if messages %}
-            <div class="alert-messages">
-                {% for message in messages %}
-                    <div class="alert alert-{{ message.tags }}">{{ message }}</div>
-                {% endfor %}
-            </div>
-        {% endif %}
-
         <div>
             <select onchange="location = this.value;">
                 <option value="{% url 'admin1_compose_email' %}">Compose Email</option>
@@ -876,13 +867,6 @@
             
             <button type="submit" class="btn btn-primary" onclick="return confirm('Are you sure you want to Send Email?')">Send Email</button>
         </form>
-        {% if messages %}
-            <div class="alert-messages">
-                {% for message in messages %}
-                    <div class="alert alert-{{ message.tags }}">{{ message }}</div>
-                {% endfor %}
-            </div>
-        {% endif %}
     </div>
 </body>
 </html>
