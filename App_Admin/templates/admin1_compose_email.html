@@ -767,52 +767,7 @@
     </script>
 
    
-    <!-- Initialize TinyMCE in the <body>
-    <script>
-        // tinymce.init({
-        //     selector: 'textarea:not(.no-tinymce)', // Exclude elements with the "no-tinymce" class
-        //     plugins: [
-        //         'anchor', 'autolink', 'charmap', 'codesample', 'emoticons', 
-        //         'image', 'link', 'lists', 'media', 'searchreplace', 
-        //         'table', 'visualblocks', 'wordcount'
-        //     ],
-        //     toolbar: 'undo redo | bold italic underline strikethrough | link image media table mergetags | checklist numlist bullist | removeformat',
-        //     mergetags_list: [
-        //         { value: 'First.Name', title: 'First Name' },
-        //         { value: 'Email', title: 'Email' }
-        //     ],
-        //     exportpdf_converter_options: { 
-        //         format: 'Letter', 
-        //         margin_top: '1in', 
-        //         margin_right: '1in', 
-        //         margin_bottom: '1in', 
-        //         margin_left: '1in' 
-        //     },
-        //     exportword_converter_options: { 
-        //         document: { size: 'Letter' } 
-        //     },
-        //     importword_converter_options: { 
-        //         formatting: { styles: 'inline' } 
-        //     },
-        //     fontsize_formats: "8pt 10pt 12pt 14pt 18pt 24pt 36pt",
-        //     branding: false,
-        //     setup: function (editor) {
-        //         editor.on('init', function () {
-        //             // Remove required attribute from hidden textarea
-        //             document.getElementById('emailBody').removeAttribute('required');
-        //         });
-        //     }
-        // });
-
-        // document.querySelector('form').addEventListener('submit', function (e) {
-        //     const emailBodyContent = tinymce.get('emailBody').getContent();
-        //     if (!emailBodyContent.trim()) {
-        //         e.preventDefault(); // Prevent form submission
-        //         alert('Email Body is required!');
-        //     }
-        // });
-        
-    </script> -->
+    
 </head>
 <body>
     <!-- Loading Spinner -->
@@ -830,13 +785,13 @@
 
         <h1>NeuCode Admin | Email Trigger</h1>
 
-        {% if messages %}
+        <!-- {% if messages %}
             <div class="alert-messages">
                 {% for message in messages %}
                     <div class="alert alert-{{ message.tags }}">{{ message }}</div>
                 {% endfor %}
             </div>
-        {% endif %}
+        {% endif %} -->
 
         <div>
             <select onchange="location = this.value;">
@@ -944,13 +899,13 @@
             
             <button type="submit" class="btn btn-primary" onclick="return confirm('Are you sure you want to Send Email?')">Send Email</button>
         </form>
-        {% if messages %}
+        <!-- {% if messages %}
             <div class="alert-messages">
                 {% for message in messages %}
                     <div class="alert alert-{{ message.tags }}">{{ message }}</div>
                 {% endfor %}
             </div>
-        {% endif %}
+        {% endif %} -->
     </div>
     <script>
         function showLoadingSpinner() {
