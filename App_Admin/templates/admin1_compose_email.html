@@ -830,13 +830,13 @@
 
         <h1>NeuCode Admin | Email Trigger</h1>
 
-        <!-- {% if messages %}
+        {% if messages %}
             <div class="alert-messages">
                 {% for message in messages %}
                     <div class="alert alert-{{ message.tags }}">{{ message }}</div>
                 {% endfor %}
             </div>
-        {% endif %} -->
+        {% endif %}
 
         <div>
             <select onchange="location = this.value;">
@@ -944,13 +944,13 @@
             
             <button type="submit" class="btn btn-primary" onclick="return confirm('Are you sure you want to Send Email?')">Send Email</button>
         </form>
-        <!-- {% if messages %}
+        {% if messages %}
             <div class="alert-messages">
                 {% for message in messages %}
                     <div class="alert alert-{{ message.tags }}">{{ message }}</div>
                 {% endfor %}
             </div>
-        {% endif %} -->
+        {% endif %}
     </div>
     <script>
         function showLoadingSpinner() {
