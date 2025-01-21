@@ -485,7 +485,7 @@
 
 
         // Handle Keyup in Email Body Field
-        // async function handleEmailBodyKeyup(editor) {
+        // async function handleEmailBodyKeyup(editor) {    
         //     const emailType = getSelectedEmailType();
         //     const editorContent = editor.getContent();
 
@@ -516,6 +516,36 @@
         // document.addEventListener('DOMContentLoaded', function () {
             
         // });
+        // Function to send client and project data to the backend
+        async function sendDataToBackend() {
+            const clientDropdown = document.querySelector('select[name="client"]');
+            const projectDropdown = document.querySelector('select[name="project"]');
+            const clientName = clientDropdown?.value;
+            const projectName = projectDropdown?.value;
+            const emailType = getSelectedEmailType();
+
+
+            if (clientName && projectName) {
+                try {
+                    const response = await fetch(`/compose-email/?client_name=${encodeURIComponent(clientName)}&project_name=${encodeURIComponent(projectName)}&email_type=${encodeURIComponent(emailType)}`, {
+                        method: 'GET',
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+
+                    const data = await response.json();
+                    console.log('Data received from backend:', data); // Debug log to confirm data reception
+                    return data;
+                } catch (error) {
+                    console.error('Error sending data to backend:', error);
+                    return null;
+                }
+            } else {
+                return null;
+            }return clientName && projectName ? { clientName, projectName } : null;
+        }
 
             
         /**
@@ -530,10 +560,18 @@
         // Attach event listener to the form
         const form = document.querySelector('#emailForm');
 
-        form.addEventListener('submit', function (e) {
+        form.addEventListener('submit', function (event) {
+            
+            const clientDropdown = document.querySelector('select[name="client"]');
+            const projectDropdown = document.querySelector('select[name="project"]');
+            const clientName = clientDropdown?.value;
+            const projectName = projectDropdown?.value;
             const emailType = getSelectedEmailType(); // Call the function to get selected email_type
-
+            //const clientProjectData =  sendDataToBackend();
+            //sendDataToBackend();
             // Debugging to ensure the selected email type is captured
+            console.log('Selected Client Name:', clientName);
+            console.log('Selected Project Name:', projectName);
             console.log('Selected Email Type:', emailType);
 
             // Create or update a hidden input field for email_type
@@ -546,8 +584,37 @@
             }
             emailTypeInput.value = emailType; // Assign the selected email type to the hidden input
 
+            // Create or update a hidden input field for client_name
+            let clientNameInput = form.querySelector('input[name="client_name"]');
+            if (!clientNameInput) {
+                clientNameInput = document.createElement('input');
+                clientNameInput.setAttribute('type', 'hidden');
+                clientNameInput.setAttribute('name', 'client_name');
+                form.appendChild(clientNameInput);
+            }
+            clientNameInput.value = clientName; // Assign the selected client name to the hidden input
+
+            // Create or update a hidden input field for project_name
+            let projectNameInput = form.querySelector('input[name="project_name"]');
+            if (!projectNameInput) {
+                projectNameInput = document.createElement('input');
+                projectNameInput.setAttribute('type', 'hidden');
+                projectNameInput.setAttribute('name', 'project_name');
+                form.appendChild(projectNameInput);
+            }
+            projectNameInput.value = projectName; // Assign the selected project name to the hidden input
+
+            console.log('Submitting client_name:', clientName); // Debug log to confirm submission
+            console.log('Submitting project_name:', projectName); // Debug log to confirm submission
+
+
             console.log('Submitting email_type:', emailType); // Debug log to confirm submission
+            
         });
+        
+        
+
+        
         /**
          * Reset Insert Link Checkbox on Email Type Change
          */
@@ -571,7 +638,7 @@
                 console.log('Client selection changed:', clientDropdown.value);
                 refreshProjects(); // Updates the project dropdown based on selected client
                 //updateSeekerAndStatus(); // Updates seeker and status dropdowns
-                //updateCCOptions(); // Updates CC options
+                
             });
         }
 
@@ -580,7 +647,7 @@
             projectDropdown.addEventListener('change', () => {
                 console.log('Project selection changed:', projectDropdown.value);
                 //updateSeekerAndStatus(); // Updates seeker and status dropdowns
-                //updateCCOptions(); // Updates CC options
+               
             });
         }
 
@@ -690,7 +757,8 @@
         fetchEmails(); // Trigger email fetching when email type changes
         //toggleCCField(); // Set CC field visibility based on the selected email type
         //updateCCOptions(); // Populate CC options
-
+        
+        //sendDataToBackend(); // Send client and project data to the backend
         //toggleEmailOptions(); // Initialize email options (e.g., unique link insertion)
         //handleEmailTypeChange(); // Initialize email type handling
 
@@ -762,13 +830,13 @@
 
         <h1>NeuCode Admin | Email Trigger</h1>
 
-        {% if messages %}
+        <!-- {% if messages %}
             <div class="alert-messages">
                 {% for message in messages %}
                     <div class="alert alert-{{ message.tags }}">{{ message }}</div>
                 {% endfor %}
             </div>
-        {% endif %}
+        {% endif %} -->
 
         <div>
             <select onchange="location = this.value;">
@@ -847,7 +915,7 @@
 
         
             
-        <form method="post" action="{% url 'compose_email' %}" id="emailForm">
+        <form method="post" action="{% url 'compose_email' %}" id="emailForm" onsubmit="showLoadingSpinner()">
             {% csrf_token %}
             <div class="form-group">
                 <label for="subject">Subject:</label>
@@ -876,13 +944,23 @@
             
             <button type="submit" class="btn btn-primary" onclick="return confirm('Are you sure you want to Send Email?')">Send Email</button>
         </form>
-        {% if messages %}
+        <!-- {% if messages %}
             <div class="alert-messages">
                 {% for message in messages %}
                     <div class="alert alert-{{ message.tags }}">{{ message }}</div>
                 {% endfor %}
             </div>
-        {% endif %}
+        {% endif %} -->
     </div>
+    <script>
+        function showLoadingSpinner() {
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            loadingSpinner.style.display = 'flex';
+        }
+
+        document.getElementById('emailForm').addEventListener('submit', function(event) {
+            showLoadingSpinner();
+        });
+    </script>
 </body>
 </html>

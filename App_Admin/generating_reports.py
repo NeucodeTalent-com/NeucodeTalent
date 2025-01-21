@@ -115,18 +115,22 @@ def assessment_number(df):
         
         # Extract the value from the column and row
         value = df.loc[0, "assessment_type"]
+        value1 = df.loc[0, "project_name"]
+        value2 = df.loc[0, "client_name"]   
         
         # Check if the value is missing, None, or empty string
         if pd.isna(value) or value == "":
-            return "00"
+            return "00", '00', '00'
         
-        return value
+        return value, value1, value2
     except Exception as e:
         # Handle any unexpected errors
         return "00"
 
-assessment_number=assessment_number(assessment)
+assessment_number, project1, client1=assessment_number(assessment)
 print(f"11.....Assessment number is ----------->>>>> {assessment_number} ")
+print(f"11.....Project is ----------->>>>> {project1} ")
+print(f"11.....Client is ----------->>>>> {client1} ")
 
 def Create_RD(db):
     # Separate 'Self' ratings
@@ -2052,7 +2056,7 @@ def upload_pdf_to_adls(pdf_content, blob_name):
     except Exception as e:
         print(f"Error uploading PDF: {e}")
 
-def generate_master_reports(rd, frd, odb_360, assessment_number, logo_path, logo_path_p, image_path, icon_path):
+def generate_master_reports(rd, frd, odb_360, assessment_number,project1, client1, logo_path, logo_path_p, image_path, icon_path):
     """
     Generate PDF reports for each candidate and upload them directly to Azure Data Lake Storage.
     """
@@ -2091,7 +2095,7 @@ def generate_master_reports(rd, frd, odb_360, assessment_number, logo_path, logo
         merger.close()
 
         # Generate the blob name with the naming convention
-        blob_name = f"reports/{candidate_name.replace(' ', '_').lower()}_assessment_{assessment_number}_report.pdf"
+        blob_name = f"reports/{candidate_name.replace(' ', '_').lower()}_assessment_{assessment_number}_{client1}_{project1}_report.pdf"
         blob_name = blob_name.lower()
         print("Report generated succsfully : >>>>>>> Going for Upload PDF.")
 
@@ -2127,6 +2131,8 @@ def main():
         frd=FRD,
         odb_360=ODB_360,
         assessment_number=assessment_number,
+        project1 = project1,
+        client1 = client1,
         icon_path=icon_path,
         logo_path_p=logo_path_p,
         image_path=image_path,

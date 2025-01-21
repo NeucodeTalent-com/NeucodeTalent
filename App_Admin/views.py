@@ -352,11 +352,13 @@ def insert_link(request):
         # Process providers
         if email_type == "provider" and insert_link:
             for cp in client_projects:
-                providers = Provider.objects.filter(cp=cp)
+
+                print(f"cp************ {cp}")
+                providers = Provider.objects.filter(cp=cp.cp_id)
                 for provider in providers:
                     # Check for duplicates
                     print("checking Provider URL!!")
-                    existing_url = ProviderURL.objects.filter(cp=cp, provider_email=provider.provider_email).first()
+                    existing_url = ProviderURL.objects.filter(cp=cp.cp_id, provider_email=provider.provider_email).first()
                     if not existing_url:
                         unique_url, unique_id = generate_unique_url(
                             request, provider.provider_email, "provider", cp.cp_id, provider.provider_id
@@ -381,12 +383,12 @@ def insert_link(request):
         # Process superusers
         if email_type == "superuser" and insert_link:
             for cp in client_projects:
-                superuser = SuperUser.objects.filter(cp=cp).first()
+                superuser = SuperUser.objects.filter(cp=cp.cp_id).first()
                 print()
                 if superuser:
                     # Check for duplicates
                     print("checking Superuser URL!!")
-                    existing_url = SuperUserURL.objects.filter(cp=cp, superuser_email=superuser.super_user_email).first()
+                    existing_url = SuperUserURL.objects.filter(cp=cp.cp_id, superuser_email=superuser.super_user_email).first()
                     if not existing_url:
                         unique_url, unique_id = generate_unique_url(
                             request, superuser.super_user_email, "superuser", cp.cp_id
@@ -410,19 +412,22 @@ def insert_link(request):
         # Process providers
         if email_type == "seeker" and insert_link:
             for cp in client_projects:
-                seekers = Seeker.objects.filter(cp=cp)
-                
+                seekers = Seeker.objects.filter(cp=cp.cp_id)
+                print(f"cp************ {cp.cp_id}")
                 for seeker in seekers:
                     # Check for duplicates
                     print("checking Seeker URL!!")
-                    existing_url = SeekerURL.objects.filter(cp=cp, seeker_email=seeker.seeker_email).first()
+                    existing_url = SeekerURL.objects.filter(cp=cp.cp_id, seeker_email=seeker.seeker_email).first()
+                    print(f"existing_url************ {existing_url}")
                     if not existing_url:
                         #for provider in providers:
                         seeker_provider_id = RelationshipView.objects.filter(cp__in=client_projects, seeker_id = seeker.seeker_id, relationship__iexact='self').first()
                         provider = Provider.objects.filter(cp__in=client_projects, provider_id = seeker_provider_id.provider_id).first()
+                        print(f"provider************ {provider}")
                         unique_url, unique_id = generate_unique_url(
                             request, provider.provider_email, "seeker", cp.cp_id, provider.provider_id
                         )
+                        print(f"unique_url************ {unique_url}")
                         print("Generate link successfully Now going to insert link!!")
                         SeekerURL.objects.create(
                             cp=cp,
@@ -434,6 +439,8 @@ def insert_link(request):
                             seeker_url=unique_url,
                             unique_id=unique_id
                         )
+                        
+
                         generated_links.append({
                             'email': seeker.seeker_email,
                             'url': unique_url,
@@ -549,14 +556,27 @@ from django.core.mail import EmailMultiAlternatives
 def compose_email(request):
     if request:
         # Get form data
+        client_name = request.POST.get('client_name', '').strip() or request.GET.get('client_name', '').strip() 
+        project_name = request.POST.get('project_name', '').strip() or request.GET.get('project_name', '').strip() 
+        print(f"client_name:::::>>>>> {client_name}")
+        print(f"project_name:::::>>>>> {project_name}")
         subject = request.POST.get('subject', '')
         email_field = request.POST.get('email_field', '')
         cc_field = request.POST.get('cc_input', '')
         email_body = request.POST.get('emailBody', '')  # Contains HTML from TinyMCE
-        email_type = request.POST.get('email_type', '').strip() or request.GET.get('email_type', '').strip()  # Email type selected by the user at the frontend
+        email_type = request.POST.get('email_type', '').strip() or request.GET.get('email_type', '').strip() # Email type selected by the user at the frontend
         print(f"Email type:::::>>>>> {email_type}")
         #insert_link = request.POST.get('insert_link', 'false').lower() == 'true'
 
+        client_projects = ClientProject.objects.filter(client_name__icontains=client_name, project_name__icontains=project_name)
+        if client_name:
+            client_projects = client_projects.filter(client_name__icontains=client_name)
+        if project_name:
+            client_projects = client_projects.filter(project_name__icontains=project_name)
+        print(f"client_projects!!!!!!!!!!!!!!:::::>>>>> {client_projects}")
+
+        client_project_id = [cp.cp_id for cp in client_projects]
+        print(f"client_project_id >>>>>>>>>>> {client_project_id}")
         # Decode HTML entities in the email body
         email_body_template = html.unescape(email_body)
 
@@ -586,21 +606,12 @@ def compose_email(request):
 
                     if email_type == "provider":
                         # Fetch the unique URL for the email
-                        provider_url = ProviderURL.objects.filter(provider_email=email).first()
+                        provider_url = ProviderURL.objects.filter( cp__in=client_project_id ,provider_email=email).first()
                         print(f"Provider URL: {provider_url.provi_url}")
                         # Replace placeholder with the appropriate link email_type == "provider" email_type == "superuser"
                         if provider_url:
                             prov_link = provider_url.provi_url
                             prov_link = extract_text_from_html(prov_link)
-                            # Regular expression to extract URLs
-                            # url_pattern = r'(http[s]?://[^\s<>"]+|www\.[^\s<>"]+)'
-                            # matches = re.findall(url_pattern, prov_link)
-                            # if matches:
-                            #     prov_link = matches[0]
-                            #     email_body_plain = email_body_plain.replace('>>>>>', f'<a href="{prov_link}">{prov_link}</a>')
-                            #     print(f"Email for {email}: Replaced with Provider URL -> {provider_url.provi_url},     link_in_body ->   {prov_link}")
-                            # else:
-                            #     print(f"No URL:::::>>>> {email}.")
                             print(f'prov_linkkkkkkk:::::>>>>>>> {prov_link}')
                             email_body_plain = email_body_plain.replace('>>>>>', f'<a href="{prov_link}">{prov_link}</a>')
                             print(f"Email for {email}: Replaced with Provider URL -> {provider_url.provi_url},     link_in_body ->   {prov_link}")
@@ -608,7 +619,7 @@ def compose_email(request):
                             print(f"No URL found for {email}, keeping placeholder.")
 
                     elif email_type == "superuser":
-                        superuser_url = SuperUserURL.objects.filter(superuser_email=email).first()
+                        superuser_url = SuperUserURL.objects.filter(cp__in=client_project_id, superuser_email=email).first()
                         print(f"Superuser URL: {superuser_url}")
                         if superuser_url:
                             supe_link = superuser_url.super_url
@@ -620,7 +631,7 @@ def compose_email(request):
 
 
                     elif email_type == "seeker":
-                        seeker_url = SeekerURL.objects.filter(seeker_email=email).first()
+                        seeker_url = SeekerURL.objects.filter(cp__in=client_project_id, seeker_email=email).first()
                         print(f"Seeker URL: {seeker_url}")
                         if seeker_url:
                             seeker_link = seeker_url.seeker_url
@@ -663,136 +674,6 @@ def compose_email(request):
         return redirect('admin1_compose_email')
 
     return render(request, 'admin1_compose_email.html')
-
-
-# from django.core.mail import EmailMultiAlternatives
-# def compose_email(request):
-#     if request:
-#         # Get form data
-#         subject = request.POST.get('subject', '')
-#         email_field = request.POST.get('email_field', '')
-#         cc_field = request.POST.get('cc_input', '')
-#         email_body = request.POST.get('emailBody', '')  # Contains HTML from TinyMCE
-#         email_type = request.POST.get('email_type', '').strip() or request.GET.get('email_type', '').strip()  # Email type selected by the user at the frontend
-#         print(f"Email type:::::>>>>> {email_type}")
-#         #insert_link = request.POST.get('insert_link', 'false').lower() == 'true'
-
-#         # Decode HTML entities in the email body
-#         email_body_template = html.unescape(email_body)
-
-#         # Parse email addresses
-#         recipient_list = [email.strip() for email in email_field.split(',') if email.strip()]
-#         cc_list = [email.strip() for email in cc_field.split(',') if email.strip()]
-
-#         if not subject or not recipient_list or not email_body_template:
-#             messages.error(request, "Subject, Selected Emails, and Email Content are required.")
-#             return redirect('admin1_compose_email')
-
-#         try:
-#             for email in recipient_list:
-
-#                 print(f"Email Body with HTML for {email}: {email_body_template}")
-#                 # Strip HTML tags for plain text emails
-#                 # personalize_email_body = strip_tags(email_body_template)
-#                 # #personalize_email_body = html2text.html2text(email_body_template)
-#                 # print(f"Before link Email Body for {email}: {personalize_email_body}")
-#                 # email_body_plain = personalize_email_body
-#                 email_body_plain = extract_text_from_html(email_body_template)
-#                 email_body_html = email_body_template
-#                 print(f"Before link Email Body for {email}: {email_body_plain}")
-                
-
-#                 # Check for placeholder in the email body
-#                 if '>>>>>' in email_body_html:
-
-#                     if email_type == "provider":
-#                         # Fetch the unique URL for the email
-#                         provider_url = ProviderURL.objects.filter(provider_email=email).first()
-#                         print(f"Provider URL: {provider_url.provi_url}")
-#                         # Replace placeholder with the appropriate link email_type == "provider" email_type == "superuser"
-#                         if provider_url:
-#                             prov_link = provider_url.provi_url
-#                             prov_link = extract_text_from_html(prov_link)
-#                             email_body_html = email_body_html.replace('>>>>>', prov_link)
-#                             email_body_plain = email_body_plain.replace('>>>>>', prov_link)
-#                             print(f"Email for {email}: Replaced with Provider URL -> {provider_url.provi_url},     link_in_body ->   {prov_link}")
-
-#                         else:
-#                             print(f"No URL found for {email}, keeping placeholder.")
-
-#                     elif email_type == "superuser":
-#                         superuser_url = SuperUserURL.objects.filter(superuser_email=email).first()
-#                         print(f"Superuser URL: {superuser_url}")
-#                         if superuser_url:
-#                             supe_link = superuser_url.super_url
-#                             supe_link = extract_text_from_html(supe_link)
-#                             email_body_html = email_body_html.replace('>>>>>', supe_link)
-#                             email_body_plain = email_body_plain.replace('>>>>>', supe_link)
-#                             print(f"Email for {email}: Replaced with Superuser URL -> {superuser_url.super_url},     link_in_body ->   {supe_link}")
-#                         else:
-#                             print(f"No URL found for {email}, keeping placeholder.")
-#                     else:
-#                         print(f"Invalid email type '{email_type}' for {email}")
-
-#                 print(f"Final Email Body for {email}: {email_body_plain}")
-#                 print(f"Final Email Body for {email}: {email_body_html}")
-                
-#                 # Send email
-#                 email_message = EmailMultiAlternatives(
-#                     subject=subject,
-#                     body=email_body_plain,  # Use plain text body
-#                     from_email='anantsol@neucodetalent.com',
-#                     to=[email],
-#                     cc=cc_list
-#                 )
-#                 email_message.attach_alternative(email_body_html, "text/html")  # HTML content
-#                 #email_message.content_subtype = "html"
-#                 #email_message.content_subtype = "plain"  # Ensure plain text email
-#                 email_message.send(fail_silently=False)
-
-#             messages.success(request, "Emails sent successfully with unique links!")
-#         except Exception as e:
-#             messages.error(request, f"Error sending email: {str(e)}")
-
-#         return redirect('admin1_compose_email')
-
-#     return render(request, 'admin1_compose_email.html')
-
-
-
-
-# # def send_test_email(request):
-# #     # Define the subject, message, and sender email
-# #     subject = 'Test Email'
-# #     message = 'This is a test email from Django.'
-# #     from_email = 'anantsol@neucodetalent.com'
-# #     # Define the list of recipients
-# #     recipients = ['ayush_s@anantsol.com', 'subhayan_r@anantsol.com', 'abbas_j@anantsol.com', 'uthsavi_k@anantsol.com']
-    
-# #     # Loop through the list of recipients and send an email to each one
-# #     for recipient in recipients:
-# #         send_mail(
-# #             subject,
-# #             message,
-# #             from_email,
-# #             [recipient],  # Send email to one recipient at a time
-# #             fail_silently=False,
-# #         )
-    
-# #     # Return a response after sending the emails
-# #     return HttpResponse("Test email sent!")
-
-
-# from django.shortcuts import render
-
-# def error_page(request):
-#     """
-#     View to display an error page for invalid or unauthorized links.
-#     """
-#     return render(request, 'error_page.html', {'message': 'Invalid or unauthorized link.'})
-
-
-
 
 
 # ##################### Page_2: Generate Reports #####################

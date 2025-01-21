@@ -100,6 +100,22 @@ class Seeker(models.Model):
     def __str__(self):
         return f"{self.seeker_first_name} {self.seeker_last_name}"
 
+# # Table_4: Provider Details
+# class Provider(models.Model):
+#     provider_id = models.AutoField(db_column='ProviderID', primary_key=True)  # Field name made lowercase.
+#     provider_first_name = models.CharField(db_column='FirstName', max_length=100)  # Field name made lowercase.
+#     provider_last_name = models.CharField(db_column='LastName', max_length=100, blank=True, null=True)  # Field name made lowercase.
+#     provider_email = models.CharField(db_column='Email', max_length=255)  # Field name made lowercase.
+#     cp = models.ForeignKey(ClientProject, models.DO_NOTHING, db_column='ClientID')  # Field name made lowercase.
+#     user_id = models.ForeignKey(MainUser, models.DO_NOTHING, db_column='UserID')  # Field name made lowercase.
+
+#     class Meta:
+#         managed = False
+#         db_table = 'provider'
+
+#     def __str__(self):
+#         return f"{self.provider_first_name} {self.provider_last_name}"
+
 # Table_4: Provider Details
 class Provider(models.Model):
     provider_id = models.AutoField(db_column='ProviderID', primary_key=True)  # Field name made lowercase.
@@ -111,7 +127,7 @@ class Provider(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'provider'
+        db_table = 'provider_copy'
 
     def __str__(self):
         return f"{self.provider_first_name} {self.provider_last_name}"
@@ -200,7 +216,30 @@ class Feedback(models.Model):
 
 #################### VIEWS ####################
 
-# View_1: Client Project
+# # View_1: Client Project
+# class CliPr(models.Model):
+
+#     cp_id = models.IntegerField(db_column="ClientID", primary_key=True)
+#     client_name = models.CharField(max_length=255, db_column="ClientName")
+#     project_name = models.CharField(max_length=255, db_column="ProjectName")
+#     seeker_id = models.IntegerField(db_column="SeekerID")
+#     seeker_name = models.CharField(max_length=255, db_column="SeekerName")
+#     seeker_email = models.EmailField(db_column="SeekerEmail")
+#     provider_id = models.IntegerField(db_column="ProviderID")
+#     provider_name = models.CharField(max_length=255, db_column="ProviderName")
+#     provider_email = models.EmailField(db_column="ProviderEmail")
+#     relationship = models.CharField(max_length=255, db_column="Relationship")
+#     status = models.CharField(max_length=50, db_column="Status")
+
+
+#     class Meta:
+#         managed = False  # Prevent migrations for this model
+#         db_table = 'client_project_view'
+
+#     def __str__(self):
+#         return f"{self.client_name} - {self.project_name} - {self.status}"
+    
+# View_1: Client_Project_copy:
 class CliPr(models.Model):
 
     cp_id = models.IntegerField(db_column="ClientID", primary_key=True)
@@ -218,7 +257,7 @@ class CliPr(models.Model):
 
     class Meta:
         managed = False  # Prevent migrations for this model
-        db_table = 'client_project_view'
+        db_table = 'client_project_view_copy'
 
     def __str__(self):
         return f"{self.client_name} - {self.project_name} - {self.status}"
@@ -293,7 +332,7 @@ class RelationshipView(models.Model):
 
     class Meta:
         managed = False  # Django won't manage the view
-        db_table = 'relationship_view'  # Name of the database view
+        db_table = 'relationship_view_copy'  # Name of the database view
         unique_together = (('cp','seeker_id', 'provider_id'),)
     def __str__(self):
          return f"Relationship between {self.seeker_id} and {self.provider_id}: {self.relationship}"
@@ -324,7 +363,7 @@ class UserSeekerView(models.Model):
 
     class Meta:
         managed = False  # Prevent migrations for this model
-        db_table = "user_seeker_view"  # Database view name
+        db_table = "user_seeker_view_copy"  # Database view name
 
     def __str__(self):
         return f"{self.seeker_name} ({self.seeker_email})"
@@ -342,7 +381,7 @@ class UserProviderView(models.Model):
 
     class Meta:
         managed = False  # Prevent migrations for this model
-        db_table = "user_provider_view"  # Database view name
+        db_table = "user_provider_view_copy"  # Database view name
 
     def __str__(self):
         return f"{self.provider_name} ({self.provider_email})"
@@ -356,7 +395,7 @@ class UniqueSeekerProviderView(models.Model):
 
     class Meta:
         managed = False  # Prevent migrations for this model
-        db_table = "unique_seeker_provider_view"  # Database view name
+        db_table = "unique_seeker_provider_view_copy"  # Database view name
 
     # def __str__(self):
     #     return f"{self.provider_name} ({self.provider_email})"
@@ -372,7 +411,7 @@ class OptimumMinimumCriteriaView(models.Model):
 
     class Meta:
         managed = False  # Prevent migrations for this model
-        db_table = "optimum_minimum_criteria_view"  # Database view name
+        db_table = "optimum_minimum_criteria_view_copy"  # Database view name
 
     # def __str__(self):
     #     return f"{self.cp_id}, Seeker ID: {self.seeker_id}"
@@ -393,7 +432,7 @@ class FullRatingDataView(models.Model):
 
     class Meta:
         managed = False  # Prevent migrations for this model
-        db_table = "full_rating_data_view"  # Database view name
+        db_table = "full_rating_data_view_copy"  # Database view name
 
     def __str__(self):
         return f"{self.seeker_name} ({self.seeker_email}) "
@@ -412,7 +451,7 @@ class OpenQuestionView(models.Model):
 
     class Meta:
         managed = False  # Prevent migrations for this model
-        db_table = "open_question_view"  # Database view name
+        db_table = "open_question_view_copy"  # Database view name
 
     def __str__(self):
         return f"{self.seeker_name} ({self.seeker_email})"
@@ -461,7 +500,7 @@ class ProviderRelationshipView(models.Model):
 
     class Meta:
         managed = False  # Django won't manage the view
-        db_table = 'provider_relationship_view'  # Name of the database view
+        db_table = 'provider_relationship_view_copy'  # Name of the database view
         unique_together = (('cp','seeker_id', 'provider_id'),)
     def __str__(self):
          return f"Relationship between {self.seeker_id} and {self.provider_id}: {self.relationship}"

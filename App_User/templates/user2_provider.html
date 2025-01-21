@@ -42,6 +42,27 @@
             
 
         });
+
+
+        
+        // document.addEventListener('DOMContentLoaded', function () {
+        //     // Check if there are any seekers in the table
+        //     const tableBody = document.querySelector('table tbody');
+        //     const feedbackStatusButton = document.querySelector('.btn.btn-info.btn-lg');
+
+        //     if (tableBody && feedbackStatusButton) {
+        //         // If the table contains a row with "No feedback seekers found", disable the button
+        //         const noDataRow = tableBody.querySelector('td[colspan]');
+        //         if (noDataRow && noDataRow.textContent.trim() === "No feedback seekers found.") {
+        //             feedbackStatusButton.disabled = true;
+        //             feedbackStatusButton.classList.add('btn-secondary'); // Change button style
+        //             feedbackStatusButton.classList.remove('btn-info');
+                    
+        //         }
+        //     }
+        // });
+        
+
     </script>
 
 </head>
@@ -54,7 +75,16 @@
 
         <!-- Button to navigate to feedback provider status page -->
         <div class="text-center mb-4">
-            <a href="{% url 'user3_seeking' %}?id={{ unique_id }}&email={{ email }}&cp_id={{ cp_id }}&provider_id={{ provider_id }}&seeker_id={{seekerid}}" class="btn btn-info btn-lg">See Feedback Provider Status</a>
+
+            <a href="{% url 'user3_seeking' %}?id={{ unique_id }}&email={{ email }}&cp_id={{ cp_id }}&provider_id={{ provider_id }}&seeker_id={{seekerid}}" class="btn btn-info btn-lg">See Feedback Provider Status</a>    
+                <!-- {% if seekerid and seekerid != "None" and seekerid != "" %}
+                    
+                    <a href="{% url 'user3_seeking' %}?id={{ unique_id }}&email={{ email }}&cp_id={{ cp_id }}&provider_id={{ provider_id }}&seeker_id={{ seekerid }}" class="btn btn-info btn-lg">See Feedback Provider Status</a>
+                {% else %}
+                    
+                    <a href="#" class="btn btn-secondary btn-lg" disabled>See Feedback Provider Status</a>
+                {% endif %} -->
+                
         </div>
 
         <!-- Back button -->
