@@ -606,7 +606,7 @@ def create_speedometer_chart(db, competency, email, is_second_chart=False):
     ax.plot([target_rad, target_rad], [0.85, 1.15], color="darkblue", lw=4)
 
     # Add labels
-    ax.text(target_rad, 1.35, f"{target_value:.2f}", ha="center", color="green", fontsize=70)
+    ax.text(target_rad, 1.26, f"{target_value:.2f}", ha="center", color="green", fontsize=62)
     ax.text(target_rad - 0.1, 0.0, f"{actual_value:.2f}", ha="center", color="gray", fontsize=180)
 
     # Save the chart with tighter bounding box and adjusted padding
@@ -1177,7 +1177,7 @@ def create_hidden_strength_page(pdf_path, logo_path, db, email):
 
     # Adjust table position based on whether data exists
     if table_data_df.empty:  # If the DataFrame is empty
-        content_start_y_position = description_y - 70
+        content_start_y_position = description_y - 20
         c.setFont("Helvetica", 14)
         c.drawString(50, content_start_y_position, "No data available")
     else:
