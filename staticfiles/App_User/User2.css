@@ -29,12 +29,17 @@ h4 {
 .logo {
     position: absolute;
     top: 20px;
-    left: 185px;
+    left: 28px;
+    text-align: center;
+    max-width: 100%;
+    max-height: 100px;
 }
 
 .logo img {
-    width: 200px;
+    width: 220px;
     height: auto;
+    margin-bottom: 20px;
+    object-fit: contain;
 }
 
 /* Select Dropdown Styling */
@@ -104,6 +109,10 @@ button:active, .btn:active {
     font-size: 14px;
 }
 
+.left-align-button {
+    float: right;
+}
+
 /* Badge Styling for Statuses */
 .badge {
     padding: 5px 10px;
@@ -133,7 +142,7 @@ button:active, .btn:active {
 
 /* Center Buttons Separately */
 .text-center {
-    margin: 30px 0;
+    margin: 35px 0;
 }
 
 /* Form Styling */
@@ -143,10 +152,17 @@ form {
 }
 
 /* Table Styling */
+.table-wrapper {
+    overflow-x: auto;
+    padding: 20px;
+}
+
 table {
     width: 100%;
     border-collapse: collapse;
     margin-top: 20px;
+    word-wrap: break-word;
+    margin: 0 auto;
 }
 
 table th, table td {
@@ -178,10 +194,13 @@ table tr:focus {
 
 /* Table Column Widths */
 table.responsive-table th:nth-child(1),
-table.responsive-table td:nth-child(1),
+table.responsive-table td:nth-child(1) {
+    width: 65%;
+}
+
 table.responsive-table th:nth-child(2),
 table.responsive-table td:nth-child(2) {
-    width: 65%;
+    width: 35%;
 }
 
 /* File Upload Styling */
@@ -208,12 +227,14 @@ table.responsive-table td:nth-child(2) {
 
 /* Container Styling */
 .container {
+    position: relative;
     background-color: #fff;
     border-radius: 8px;
     padding: 30px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     max-width: 900px;
     margin: 0 auto;
+    
 }
 
 /* Content Section Styling */
@@ -276,13 +297,18 @@ textarea:focus {
         flex-direction: column;
         gap: 5px;
     }
+
+    .table-wrapper {
+        overflow-x: auto;
+        padding: 20px;
+    }
 }
 
 /* Inline Rating Styling */
 .inline-rating {
     display: flex;
     justify-content: space-between;
-    gap: 10px;
+    gap: 5px;
 }
 
 .rating-label {

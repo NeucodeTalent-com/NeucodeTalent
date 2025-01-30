@@ -47,13 +47,14 @@
         <h1 class="text-center mb-4">NeuAssessment</h1>
 
         <!-- Home Buttons -->
-        <div class="text-center mb-4">
-            <a href="{% url 'user2_provider' %}?id={{ unique_id }}&email={{ email }}&cp_id={{ cp_id }}&provider_id={{ provider_id }}" class="btn btn-secondary btn-lg">Go Home</a>
-        </div>
+        <div class="text-center mb-4" style="display: flex; justify-content: space-between; align-items: center;">
+            
+        <!-- </div> -->
 
         <!-- Navigation Buttons -->
-        <div class="text-center mb-4">
+        <!-- <div class="text-center mb-4"> -->
             <a href="{% url 'user4_mcq_questions' %}?id={{ unique_id }}&email={{ email }}&cp_id={{ cp_id }}&provider_id={{ provider_id }}&seeker_id={{seeker_id}}" class="btn btn-secondary btn-lg">Back</a>
+            <a href="{% url 'user2_provider' %}?id={{ unique_id }}&email={{ email }}&cp_id={{ cp_id }}&provider_id={{ provider_id }}" class="btn btn-secondary btn-lg">Go Home</a>
         </div>
 
         {% if messages %}

@@ -74,9 +74,9 @@
         <h1 class="text-center mb-4">NeuAssessment | Participants Information</h1>
 
         <!-- Button to navigate to feedback provider status page -->
-        <div class="text-center mb-4">
+        <div class="text-center mb-4" style="display: flex; justify-content: space-between; align-items: center;">
 
-            <a href="{% url 'user3_seeking' %}?id={{ unique_id }}&email={{ email }}&cp_id={{ cp_id }}&provider_id={{ provider_id }}&seeker_id={{seekerid}}" class="btn btn-info btn-lg">See Feedback Provider Status</a>    
+            
                 <!-- {% if seekerid and seekerid != "None" and seekerid != "" %}
                     
                     <a href="{% url 'user3_seeking' %}?id={{ unique_id }}&email={{ email }}&cp_id={{ cp_id }}&provider_id={{ provider_id }}&seeker_id={{ seekerid }}" class="btn btn-info btn-lg">See Feedback Provider Status</a>
@@ -85,11 +85,12 @@
                     <a href="#" class="btn btn-secondary btn-lg" disabled>See Feedback Provider Status</a>
                 {% endif %} -->
                 
-        </div>
+        <!-- </div> -->
 
         <!-- Back button -->
-        <div class="text-center mb-4">
+        <!-- <div class="text-center mb-4"> -->
             <a href="{% url 'user1_instructions' %}?id={{ unique_id }}&email={{ email }}&cp_id={{ cp_id }}&provider_id={{ provider_id }}" class="btn btn-secondary btn-lg">Back</a>
+            <a href="{% url 'user3_seeking' %}?id={{ unique_id }}&email={{ email }}&cp_id={{ cp_id }}&provider_id={{ provider_id }}&seeker_id={{seekerid}}" class="btn btn-info btn-lg">See Feedback Provider Status</a>    
         </div>
 
         <!-- Table for Feedback Seekers -->
@@ -127,7 +128,7 @@
                                 {% if seeker.status == 'Completed' %}
                                     <button class="btn btn-sm btn-secondary" disabled>Completed</button>
                                 {% else %}
-                                    <a href="{% url 'user4_mcq_questions' %}?id={{ unique_id }}&email={{ email }}&cp_id={{ cp_id }}&provider_id={{ provider_id }}&seeker_id={{seeker.seeker_id}}" class="btn btn-sm btn-primary">Action</a>
+                                    <a href="{% url 'user4_mcq_questions' %}?id={{ unique_id }}&email={{ email }}&cp_id={{ cp_id }}&provider_id={{ provider_id }}&seeker_id={{seeker.seeker_id}}" class="btn btn-sm btn-primary" style="font-size: 20px;">⇨</a>
                                 {% endif %}
                             </td>
                         </tr>

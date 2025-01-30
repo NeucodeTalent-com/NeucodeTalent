@@ -32,13 +32,19 @@ h4 {
 .logo {
     position: absolute;
     top: 20px;
-    left: 185px;
+    left: 25px;
+    text-align: center;
+    max-width: 100%;
+    max-height: 100px;
 }
 
 .logo img {
-    width: 200px; /* Adjust the size as needed */
+    width: 220px; /* Adjust the size as needed */
     height: auto;
+    margin-bottom: 20px;
+    object-fit: contain;
 }
+
 /* Select Dropdown Styling */
 select {
     padding: 10px;
@@ -140,8 +146,8 @@ button:active, .btn:active {
 
 /* Center Buttons Separately */
 .text-center {
-    margin-top: 30px;
-    margin-bottom: 30px;
+    margin-top: 45px;
+    margin-bottom: 25px;
 }
 
 
@@ -152,10 +158,17 @@ form {
 }
 
 /* Table Styling */
+.table-wrapper {
+    overflow-x: auto;
+    padding: 20px;
+}
+
 table {
     width: 100%;
     border-collapse: collapse;
     margin-top: 20px;
+    word-wrap: break-word;
+    margin: 0 auto;
 }
 
 table th, table td {
@@ -241,6 +254,7 @@ table.responsive-table td {
 
 /* Container Styling */
 .container {
+    position: relative;
     background-color: #fff;
     border-radius: 8px;
     padding: 30px;
@@ -296,6 +310,13 @@ textarea:focus {
         font-size: 24px;
     }
 
+    .logo {
+        top: 10px; /* Adjust position */
+        left: 10px;
+        max-width: 70px; /* Smaller size for smaller screens */
+        max-height: 70px;
+    }
+
     table th, table td {
         padding: 8px;
     }
@@ -308,6 +329,10 @@ textarea:focus {
     .rating-scale {
         flex-direction: column;
         gap: 5px;
+    }
+    .table-wrapper {
+        overflow-x: auto;
+        padding: 20px;
     }
 }
 

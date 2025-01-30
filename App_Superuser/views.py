@@ -331,7 +331,7 @@ def superuser_pdf(request):
     ws.merge_cells('A1:G1')
     header_cell = ws['A1']
     header_cell.value = f"Dashboard for {client_name} | Project: {project_name}"
-    header_cell.font = Font(bold=True, size=14)
+    header_cell.font = Font(bold=True, size=14, color='FFFFFF')
     header_cell.alignment = Alignment(horizontal='center', vertical='center')
     header_cell.fill = PatternFill(start_color='8d34db', end_color='8d34db', fill_type='solid')
 

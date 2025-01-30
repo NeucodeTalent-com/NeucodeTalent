@@ -880,15 +880,17 @@
 
             <div class="form-group">
                 <label for="email_field">Selected Emails:</label>
-                <textarea id="email_field" name="email_field" class="form-control no-tinymce" rows="4" cols="50" readonly ></textarea>
-                <small class="form-text text-muted">Separate multiple emails with commas (if using text input).</small>
+                <textarea id="email_field" name="email_field" class="form-control no-tinymce" rows="4" cols="50" ></textarea>
+                <small class="form-text text-muted">Separate multiple emails with commas (Use text input).</small><br>
+                <small class="form-text text-muted">A link cannot be generated or triggered in the email if the email ID is not present in the database.</small><br>
+                <small class="form-text text-muted">Link is generated in database by these steps as follows Select Client > Select Project > Select Email Type > Tick Insert Link.</small>
             </div>
             
 
             <div class="form-group" id="cc_field">
                 <label for="cc_input">CC:</label>
                 <textarea id="cc_input" name="cc_input" class="form-control no-tinymce" placeholder="Add custom email" rows="4" cols="50"   ></textarea>
-                <small class="form-text text-muted">Separate multiple emails with commas (if using text input).</small>
+                <small class="form-text text-muted">Separate multiple emails with commas (Use text input).</small>
             </div>
             
             <div class="form-group">
